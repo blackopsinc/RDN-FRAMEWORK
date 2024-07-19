@@ -1,0 +1,51 @@
+version: '3'
+services:
+
+  rdn_server:
+    image: blackopsinc/rdnserver:latest
+    container_name: rdn-server
+    command: bash -c "sh /var/www/cgi-bin/rdn_server/install.sh; apache2ctl -D FOREGROUND"
+    ports:
+      - '127.0.0.1:8080:8080'
+    volumes:
+    - ./rdn_server:/var/www/
+    stdin_open: true
+    tty: true
+    devices:
+    - /dev/net/tun:/dev/net/tun
+    cap_add:
+    - NET_ADMIN
+    hostname: rdn_server
+    networks:
+      rdn_net:
+        ipv4_address: 172.20.0.101
+
+  rdn_data:
+    image: blackopsinc/rdndata:latest
+    container_name: rdn-data
+    cap_add:
+      - SYS_NICE
+    restart: always
+    environment:
+      - MYSQL_DATABASE=rdn
+      - MYSQL_ROOT_PASSWORD=changeme
+    ports:
+     - '3306:3306'
+    volumes:
+      - ./rdn_data/data:/var/lib/mysql
+      - ./rdn_data/db/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+    hostname: rdn_data
+    networks:
+      rdn_net:
+        ipv4_address: 172.20.0.200
+
+networks:
+  rdn_net:
+    ipam:
+      config:
+        - subnet: 172.20.0.0/24
+
+volumes:
+  data:
+    driver: local

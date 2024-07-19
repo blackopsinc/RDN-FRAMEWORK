@@ -1,0 +1,242 @@
+#!/usr/bin/perl
+################################################
+#      Copyright 2004-2011 RDN Networks        #
+################################################
+
+use CGI;
+use MIME::Base64;
+$rdn = new CGI;
+$rdn_target = $rdn->param('target');
+$rdn_keyget= $rdn->param('key');
+require "/var/www/cgi-bin/rdn_server/config.conf";
+require "/var/www/cgi-bin/rdn_server/rdn_session";
+require "/var/www/cgi-bin/rdn_server/rdn_database";
+
+$rdn_sessionstatus=&rdn_getsession;
+
+sub genHeader{
+print $rdn->header("text/html");
+print <<HEAD;
+<!---(c) $rdn_copy $rdn_title, version $rdn_version $rdn_codename--->
+<html>
+<head>
+<link href="$rdn_server$rdn_port/css/$rdn_theme/rdn_console.css" rel="stylesheet" type="text/css">
+<!--- Editbox --->
+<script language="javascript" type="text/javascript">
+	function showEdit(object) {
+	window.open(object,'showEdit',"resizable=yes, width=700, height=520");
+}
+</script>
+<!--- Logout --->
+<script language="javascript" type="text/javascript">
+	function Logout(object) {
+	parent.frames.location.replace ("$rdn_server$rdn_port/$rdn_bin/rdn_console?target=logout");
+}
+</script>
+</head>
+<body>
+<!-- Outer table -->
+<table border="0" align="top" width="100%">
+<tr><td>
+<!-- Inner left table -->
+<table><tr><td><img src="$rdn_server$rdn_port/css/$rdn_theme/logo.jpg" height="20" width="125"></img></td></tr></table>
+</td>
+<td>
+<!-- Inner righttable -->
+<table align="right"><tr><td>
+	<!--<input type="button" value="Edit" onClick="showEdit('rdn_editor?action=edit&file=&host=localhost&key=$rdn_key');" class="buttons">-->
+	<input type="button" value="Logout" onClick="Logout('TRUE');" class="buttons">
+</td></tr></table>
+</td>
+</tr>
+</table>
+</body>
+</html>
+HEAD
+exit;
+}
+
+sub genMenu{
+print $rdn->header("text/html");
+print <<MENU;
+MENU
+exit;
+}
+
+sub genOutput{
+print $rdn->header("text/html");
+print <<OUTPUTH;
+<html>
+<head>
+<link href="$rdn_server$rdn_port/css/$rdn_theme/rdn_output.css" rel="stylesheet" type="text/css">
+<script language="javascript" type="text/javascript">
+function showLicense(){
+var lic=confirm('Do you accept the RDN Networks End User License Agreement (EULA)?', "RDN License");
+if(lic){
+return
+}
+else{
+parent.frames.location.replace ("$rdn_server$rdn_port/");
+}
+}
+</script>
+</head>
+OUTPUTH
+$rdn_agent = $ENV{'HTTP_USER_AGENT'};
+if ($rdn_agent =~ m/(Firefox|Chrome|Safari)/){ 
+print '<body onLoad="showLicense();"><div id="background"><img src="' . $rdn_server . $rdn_port . '/css/' . $rdn_theme . '/background.jpg" width="100%" height="100%" alt=""></div><div id="output"><pre>' . "\n";
+}
+else{
+print '<body onLoad="showLicense();"><pre>';
+}
+@LICENSE = `cat LICENSE`;
+print @LICENSE;
+print <<OUTPUTF;
+</pre></div></body>
+</html>
+OUTPUTF
+exit;
+}
+
+sub genCommand{
+print $rdn->header("text/html");
+print <<COMMAND;
+<!---(c) $rdn_copy $rdn_title, version $rdn_version $rdn_codename--->
+<html>
+<head>
+<link href="$rdn_server$rdn_port/css/$rdn_theme/rdn_console.css" rel="stylesheet" type="text/css">
+</head>
+<body onLoad="document.forms.remote_con.cmd.focus();">
+<table border="0" align="top" width="100%"><tr><td>
+<form action="$rdn_server$rdn_port/$rdn_bin/rdn_webcmd" method="post" target="output" name="remote_con">
+Command:&nbsp;</label><input name="cmd" size="48" maxlength="1024" type="text">&nbsp;&nbsp;
+Search:&nbsp;<input name="search" value=" " size ="16" type="text">
+Host:&nbsp;<select name="host">
+COMMAND
+#
+# RDN Group
+#
+#&rdn_hosts_server_gen;
+#
+# WEB Group
+#
+&rdn_hosts_web_gen;
+#
+# SSH Group
+#
+#&rdn_hosts_ssh_gen;
+print <<COMMAND_;
+</select>
+Refresh:&nbsp;<input name="refresh" size="1" value="0" type="text">
+Sudo:&nbsp;<input name="sudo" value="1" type="checkbox">
+<input type="submit" value="Run" class="buttons">
+<input type="hidden" value="$rdn_key" name="key">&nbsp;
+</form>
+<a href="$rdn_server$rdn_port/$rdn_bin/rdn_webcmd?cmd=rdn_stop&host=localhost&key=$rdn_key" target="output" >
+<input type="submit" value="Stop" class="buttons">
+</a>
+</td></tr></table></body></html>
+COMMAND_
+exit;
+};
+
+#
+# RDN Console Setup (Menu,Command, Output, etc.)
+#
+if (($rdn_target eq 'header') && ($rdn_keyget eq $rdn_key) && ($rdn_sessionstatus eq "alive")){ 
+&genHeader;
+}
+if (($rdn_target eq 'menu') && ($rdn_keyget eq $rdn_key) && ($rdn_sessionstatus eq "alive")){ 
+&genMenu;
+}
+if (($rdn_target eq 'output') && ($rdn_keyget eq $rdn_key) && ($rdn_sessionstatus eq "alive")){ 
+&genOutput;
+}
+if (($rdn_target eq 'command') && ($rdn_keyget eq $rdn_key) && ($rdn_sessionstatus eq "alive")){ 
+&genCommand;
+}
+#
+# RDN Console Setup (Frameset, Borders, etc.)
+#
+if (($rdn_target eq 'console') && ($rdn_keyget eq $rdn_key)){
+&rdn_setsession;
+$rdn_agent = $ENV{'HTTP_USER_AGENT'};
+if ($rdn_agent =~ m/Firefox/){
+print <<CONSOLE;
+<!---(c) $rdn_copy $rdn_title, version $rdn_version $rdn_codename--->
+<html>
+<head>
+<title>$rdn_title, version $rdn_version $rdn_codename</title>
+</head>
+<frameset id="scc_console" rows="40,*,40" cols="*" frameborder="0" framespacing="0" border="0">
+	<frame id="webcmd_hed" name="header" src="$rdn_server$rdn_port/$rdn_bin/rdn_console?target=header&key=$rdn_key" noresize scrolling="no">
+<frameset id="webcmd_con" rows="*" cols="0,*" frameborder="no">
+	<frame id="webcmd_mnu" name="menu" src="$rdn_server$rdn_port/$rdn_bin/rdn_console?target=menu&key=$rdn_key" noresize scrolling="no">
+	<frame id="webcmd_out" name="output" src="$rdn_server$rdn_port/$rdn_bin/rdn_console?target=output&key=$rdn_key" noresize scrolling="auto">
+</frameset>
+	<frame id="webcmd_cmd" name="command" src="$rdn_server$rdn_port/$rdn_bin/rdn_console?target=command&key=$rdn_key" noresize scrolling="no">
+</frameset><noframes></noframes>
+</html>
+CONSOLE
+exit;
+}
+
+if ($rdn_agent =~ m/(Chrome|Safari)/){
+print <<CONSOLE;
+<!---(c) $rdn_copy $rdn_title, version $rdn_version $rdn_codename--->
+<html>
+<head>
+<title>$rdn_title, version $rdn_version $rdn_codename</title>
+</head>
+<frameset id="scc_console" rows="38,*,38" cols="*" frameborder="0" framespacing="0" border="0">
+	<frame id="webcmd_hed" name="header" src="$rdn_server$rdn_port/$rdn_bin/rdn_console?target=header&key=$rdn_key" noresize scrolling="no">
+<frameset id="webcmd_con" rows="*" cols="0,*" frameborder="no">
+	<frame id="webcmd_mnu" name="menu" src="$rdn_server$rdn_port/$rdn_bin/rdn_console?target=menu&key=$rdn_key" noresize scrolling="no">
+	<frame id="webcmd_out" name="output" src="$rdn_server$rdn_port/$rdn_bin/rdn_console?target=output&key=$rdn_key" noresize scrolling="auto">
+</frameset>
+	<frame id="webcmd_cmd" name="command" src="$rdn_server$rdn_port/$rdn_bin/rdn_console?target=command&key=$rdn_key" noresize scrolling="no">
+</frameset><noframes></noframes>
+</html>
+CONSOLE
+exit;
+}
+
+if ($rdn_agent !~ m/(Firefox|Chrome|Safari)/){
+print <<CONSOLE;
+<!---(c) $rdn_copy $rdn_title, version $rdn_version $rdn_codename--->
+<html>
+<head>
+<title>$rdn_title, version $rdn_version $rdn_codename</title>
+</head>
+<frameset id="scc_console" rows="40,*,40" cols="*" frameborder="0" framespacing="0" border="0">
+	<frame id="webcmd_hed" name="header" src="$rdn_server$rdn_port/$rdn_bin/rdn_console?target=header&key=$rdn_key" noresize scrolling="no">
+<frameset id="webcmd_con" rows="*" cols="0,*" frameborder="0">
+	<frame id="webcmd_mnu" name="menu" src="$rdn_server$rdn_port/$rdn_bin/rdn_console?target=menu&key=$rdn_key" noresize scrolling="no">
+	<frame id="webcmd_out" name="output" src="$rdn_server$rdn_port/$rdn_bin/rdn_console?target=output&key=$rdn_key" noresize scrolling="auto">
+</frameset>
+	<frame id="webcmd_cmd" name="command" src="$rdn_server$rdn_port/$rdn_bin/rdn_console?target=command&key=$rdn_key" noresize scrolling="no">
+</frameset><noframes></noframes>
+</html>
+CONSOLE
+exit;
+}
+}
+
+else{
+&rdn_expiresession;
+print <<ALERT;
+<html>
+<head>
+<link href="$rdn_server$rdn_port/css/$rdn_theme/rdn_output.css" rel="stylesheet" type="text/css">
+<script language="javascript" type="text/javascript">
+function show_alert(){
+window.alert("RDNetworks - Security Policy! ( $rdn_hostname )", "Null");
+parent.frames.location.replace ("$rdn_server$rdn_port/");
+}
+</script>
+<body onLoad="show_alert();">
+</body>
+</html>
+ALERT
+exit;
+}

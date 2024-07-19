@@ -1,0 +1,56 @@
+################################################
+#      Copyright 2004-2011 RDN Networks        #
+################################################
+
+use CGI::Cookie;
+require "/var/www/cgi-bin/rdn_server/config.conf";
+
+sub rdn_setsession{
+$sessid_length=16;
+for($sessic=0 ; $sessic < $sessid_length ;){
+	$sessgen = chr(int(rand(255)));
+	if($sessgen =~ /[a-z0-9]/){
+		$sessionid .=$sessgen;
+		$sessic++;
+	}
+}
+######### Session ID ##########
+$set_cookie = $rdn->cookie(
+	-name=>'rdn_sessionid',
+	-value=>$sessionid,
+	-expires=>'+5m',
+	-secure=>1
+	);
+print $rdn->header(-cookie=>$set_cookie);
+}
+
+sub rdn_getsession{
+    %cookies = fetch CGI::Cookie;
+	if (!%cookies){
+	$status = "timeout";
+	return $status;
+	}
+	$status = "alive";
+	return $status;
+}
+
+sub rdn_expiresession{
+$sessid_length=16;
+for($sessic=0 ; $sessic < $sessid_length ;){
+        $sessgen = chr(int(rand(255)));
+        if($sessgen =~ /[a-z0-9]/){
+                $sessionid .=$sessgen;
+                $sessic++;
+        }
+}
+######### Session ID ##########
+$set_cookie = $rdn->cookie(
+        -name=>'rdn_sessionid',
+        -value=>$sessionid,
+        -expires=>'+0m',
+        -secure=>1
+        );
+print $rdn->header(-cookie=>$set_cookie);
+}
+
+1;

@@ -1,0 +1,36 @@
+#!/usr/bin/perl
+################################################
+#      Copyright 2004-2011 RDN Networks        #
+################################################
+
+require "/var/www/cgi-bin/rdn_server/rdn_database";
+
+if (@ARGV < 3){
+	print "\nUsage: $0 <user> <host> <command>\n\n";
+};
+
+if (@ARGV == 3){
+	&rdn_cmd;
+	if (($rdn_data eq "0") || ($rdn_data eq "") || ($rdn_data eq " ")){
+		exit;
+	}
+	else{
+		&rdn_audit;
+	}
+	exit;
+}
+
+else{
+	exit;
+}
+
+sub rdn_cmd{
+$rdn_user = $ARGV[0];
+$rdn_host = $ARGV[1];
+$rdn_cmd = $ARGV[2];
+$rdn_type = "ssh";
+$target = 'ssh -T -o BatchMode=yes ' . $rdn_user . '@' . $rdn_host . ' ' . $rdn_cmd;
+$rdn_data = `$target`;
+print $rdn_data;
+};
+

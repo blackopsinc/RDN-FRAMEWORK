@@ -1,0 +1,190 @@
+#!/usr/bin/perl
+################################################
+# Copyright 2004-2011 RDN Networks Inc.  #
+################################################
+
+use CGI;
+$rdn = new CGI;
+$rdn_cmd = $rdn->param('cmd');
+$rdn_search = $rdn->param('search');
+$rdn_host = $rdn->param('host');
+$rdn_user = $rdn->param('user');
+$rdn_pass = $rdn->param('pass');
+$rdn_refresh = $rdn->param('refresh');
+$rdn_sudo = $rdn->param('sudo');
+$rdn_keyget = $rdn->param('key');
+@rdn_searchstring = ("<",">","><"); 				
+@rdn_replacestring = ("&lt;","&gt;","&gt;&lt;"); 
+require "/var/www/cgi-bin/rdn_server/config.conf";
+require "/var/www/cgi-bin/rdn_server/rdn_session";
+
+$rdn_sessionstatus=&rdn_getsession;
+$rdn_search =~ s/(\`|\~|\!|\@|\#|\$|\%|\^|\&|\*|\(|\)|\-|\=|\+|\[|\]|\\|\;|\'|\,|\{|\}|\||\:|\"|\<|\>|\?)//g;
+
+if(($rdn_keyget ne $rdn_key) && ($rdn_keyget ne $rdn_global_key) || ($rdn_sessionstatus eq "timeout")){
+print $rdn->header("text/html");
+print <<ALERT;
+<html>
+<head>
+<link href="$rdn_server$rdn_port/css/$rdn_theme/rdn_output.css" rel="stylesheet" type="text/css">
+<script language="javascript" type="text/javascript">
+function show_alert(){
+window.alert("RDNetworks - Security Policy! ( $rdn_hostname )", "Null");
+parent.frames.location.replace ("$rdn_server$rdn_port/");
+}
+</script>
+<body onLoad="show_alert();">
+</body>
+</html>
+ALERT
+exit;
+}
+
+if(($rdn_cmd eq "") && ($rdn_sessionstatus eq "alive")){
+&rdn_setsession;
+print '<html>' . "\n";
+print '<head>' . "\n";
+print <<SCRIPT;
+<script type="text/javascript"></script>
+SCRIPT
+print '<link href="' . $rdn_server . $rdn_port . '/css/' . $rdn_theme . '/rdn_output.css" type="text/css" rel="stylesheet">' . "\n";
+print '<meta http-equiv="expires" content="0">' . "\n";
+print '</head>' . "\n";
+$rdn_agent = $ENV{'HTTP_USER_AGENT'};
+if ($rdn_agent =~ m/(Firefox|Chrome|Safari)/){
+print '<body onLoad="window.parent.frames.command.document.forms.remote_con.cmd.focus(); return false;"><div id="background"><img src="' . $rdn_server . $rdn_port . '/css/' . $rdn_theme . '/background.jpg" width="100%" height="100%" alt=""></div><div id="output"><pre>' . "\n";
+}
+else{
+print '<body onLoad="window.parent.frames.command.document.forms.remote_con.cmd.focus(); return false;"><pre>';
+}
+print "RDNetworks - Enter Command! ($rdn_hostname) ";
+print '<br></pre></div></div></body></html>';
+exit;
+}
+
+if(($rdn_cmd eq "rdn_stop") && ($rdn_sessionstatus eq "alive")){
+&rdn_setsession;
+print '<html>' . "\n";
+print '<head>' . "\n";
+print <<SCRIPT;
+<script type="text/javascript"></script>
+SCRIPT
+print '<link href="' . $rdn_server . $rdn_port . '/css/' . $rdn_theme . '/rdn_output.css" type="text/css" rel="stylesheet">' . "\n";
+print '<meta http-equiv="expires" content="0">' . "\n";
+print '</head>' . "\n";
+$rdn_agent = $ENV{'HTTP_USER_AGENT'};
+if ($rdn_agent =~ m/(Firefox|Chrome|Safari)/){
+print '<body onLoad="window.parent.frames.command.document.forms.remote_con.cmd.focus(); return false;"><div id="background"><img src="' . $rdn_server . $rdn_port . '/css/' . $rdn_theme . '/background.jpg" width="100%" height="100%" alt=""></div><div id="output"><pre>' . "\n";
+}
+else{
+print '<body onLoad="window.parent.frames.command.document.forms.remote_con.cmd.focus(); return false;"><pre>';
+}
+print "RDNetworks - Stopping Commands! ($rdn_hostname) ";
+#
+# Should stop commands on rdn_sever only!
+#
+$rdn_cmd = `sudo /usr/bin/killall rdn_webcmd_server;sudo /usr/bin/killall securecmd_ssh; sudo /usr/bin/killall securecmd_web`;
+print '<br></pre></div></div></body></html>';
+exit;	
+}
+
+if (($rdn_cmd ne "") && ($rdn_host ne "") && ($rdn_sessionstatus eq "alive")){
+&rdn_setsession;
+print '<html>' . "\n";
+print '<head>' . "\n";
+print <<SCRIPT;
+<script type="text/javascript"></script>
+SCRIPT
+print '<link href="' . $rdn_server . $rdn_port . '/css/' . $rdn_theme . '/rdn_output.css" type="text/css" rel="stylesheet">' . "\n";
+print '<meta http-equiv="expires" content="0">' . "\n";
+print '</head>' . "\n";
+if (($rdn_refresh ne "") && ($rdn_refresh ne "0")) {
+	print '<meta http-equiv="refresh" content="' . $rdn_refresh . ';url=' . $rdn_server . $rdn_port . '/' . $rdn_bin . '/rdn_webcmd?cmd=' . $rdn_cmd . '&host=' . $rdn_host .  '&key=' . $rdn_key . '&user=' . $rdn_user . '&refresh=' . $rdn_refresh . '&sudo=' . $rdn_sudo . '&search=' . $rdn_search . '"></meta>';
+}
+$rdn_agent = $ENV{'HTTP_USER_AGENT'};
+if ($rdn_agent =~ m/(Firefox|Chrome|Safari)/){
+print '<body onLoad="window.parent.frames.command.document.forms.remote_con.cmd.focus(); return false;"><div id="background"><img src="' . $rdn_server . $rdn_port . '/css/' . $rdn_theme . '/background.jpg" width="100%" height="100%" alt=""></div><div id="output"><pre>' . "\n";
+}
+else{
+print '<body onLoad="window.parent.frames.command.document.forms.remote_con.cmd.focus(); return false;"><pre>';
+}
+
+if ($rdn_sudo eq '1'){
+	if(($rdn_host =~ m/aHR0/)==1){
+		$rdn_securecmd = securecmd_web . " " . "'" . $rdn_host . "'" . " " . "'" . 'sudo ' . $rdn_cmd . "'";
+	}
+	if (($rdn_host =~ m/http/)==0 && ($rdn_host =~ m/aHR0/)==0){
+		$rdn_user = &rdn_get_user_pass("$rdn_host");	
+		$rdn_securecmd = securecmd_ssh . " " . $rdn_user . " " . $rdn_host . " " . "'" . 'sudo ' . $rdn_cmd . "'";
+	}
+	push(@output,`$rdn_securecmd`); 
+	foreach (@output){		
+		$output = s/$rdn_searchstring[0]/$rdn_replacestring[0]/g;
+		$output = s/$rdn_searchstring[1]/$rdn_replacestring[1]/g;
+		$output = s/$rdn_searchstring[2]/$rdn_replacestring[2]/g;
+		if($rdn_search ne ""){
+		my @rdn_search_buff = split(' ',$rdn_search);
+			foreach $rdn_search_item (@rdn_search_buff){
+				$rdn_replace = '<font>' . $rdn_search_item . '</font>';
+				$output = s/$rdn_search_item/$rdn_replace/g;
+			}
+		}				
+	}
+	if (@output eq "0"){
+		print 'RDNetworks - Command returned null on (' . $rdn_host . ")\n";
+		print '</pre></body></html>';
+		exit;
+	}
+	print @output;
+}
+
+else{
+	if(($rdn_host =~ m/aHR0/)==1){
+		$rdn_securecmd = securecmd_web . " " . $rdn_host . " " . "'" . $rdn_cmd . "'";
+	}
+	if (($rdn_host =~ m/http/)==0 && ($rdn_host =~ m/aHR0/)==0){
+		$rdn_user = &rdn_get_user_pass("$rdn_host");
+		$rdn_securecmd = securecmd_ssh . " " . $rdn_user . " " . $rdn_host . " " . "'" . $rdn_cmd . "'";
+	}
+	push(@output,`$rdn_securecmd`);
+	foreach (@output){
+		$output = s/$rdn_searchstring[0]/$rdn_replacestring[0]/g;
+		$output = s/$rdn_searchstring[1]/$rdn_replacestring[1]/g;
+		$output = s/$rdn_searchstring[2]/$rdn_replacestring[2]/g;
+		if($rdn_search ne ""){
+		my @rdn_search_buff = split(' ',$rdn_search);
+			foreach $rdn_search_item (@rdn_search_buff){
+				$rdn_replace = '<font>' . $rdn_search_item . '</font>';
+				$output = s/$rdn_search_item/$rdn_replace/g;
+			}
+		}			
+	}
+	if (@output eq "0"){
+		print 'RDNetworks - Command returned null on (' . $rdn_host . ")\n";
+		print '</pre></body></html>';
+		exit;
+	}
+	print @output;
+}	
+print '<br></pre></div></div></body></html>';
+exit;
+}
+
+else{
+&rdn_expiresession;
+print <<ALERT;
+<html>
+<head>
+<link href="$rdn_server$rdn_port/css/$rdn_theme/rdn_output.css" rel="stylesheet" type="text/css">
+<script language="javascript" type="text/javascript">
+function show_alert(){
+window.alert("RDNetworks - Security Policy! ( $rdn_hostname )", "Null");
+parent.frames.location.replace ("$rdn_server$rdn_port/");
+}
+</script>
+<body onLoad="show_alert();">
+</body>
+</html>
+ALERT
+exit;
+}

@@ -1,0 +1,81 @@
+#TB_window {
+	font: 12px Arial, Helvetica, sans-serif;
+	color: #000000;
+}
+
+#TB_secondLine {
+	font: 10px Arial, Helvetica, sans-serif;
+	color:#666666;
+}
+
+#TB_overlay {
+	position: fixed;
+	top: 0px;
+	left: 0px;
+	height:100%;
+	width:110%;
+}
+
+.TB_overlayBG {
+	background-color:#000;
+	filter:alpha(opacity=40);
+	-moz-opacity: 0.40;
+	opacity: 0.40;
+}
+
+/* IE Fix */
+* html #TB_overlay { 
+     position: absolute;
+     height: expression(document.body.scrollHeight > document.body.offsetHeight ? document.body.scrollHeight : document.body.offsetHeight + 'px');
+}
+
+#TB_window {
+	position: fixed;
+	background: #e43434;
+	z-index: 100;
+	color:#000000;
+	display:none;
+	border: 1px solid #e43434;
+	top:50%;
+	left:50%;
+}
+
+/* IE Fix */
+* html #TB_window { 
+position: absolute;
+margin-top: expression(0 - parseInt(this.offsetHeight / 2) + (TBWindowMargin = document.documentElement && document.documentElement.scrollTop || document.body.scrollTop) + 'px');
+}
+
+#TB_closeWindow{
+	height:25px;
+	padding:11px 25px 10px 0;
+	float:right;
+}
+
+#TB_closeAjaxWindow{
+	padding:7px 10px 5px 0;
+	margin-bottom:1px;
+	text-align:right;
+	float:right;
+}
+
+#TB_ajaxWindowTitle{
+	color: #ffffff;
+	float:left;
+	padding:7px 0 5px 10px;
+	margin-bottom:1px;
+}
+
+#TB_title{
+	background-color: #666666;
+	height:27px;
+	/* IE Fix */
+	width:100.1%; 
+}
+
+#TB_load{
+	position: fixed;
+	display:none;
+	top: 45%;
+	left: 45%;
+}

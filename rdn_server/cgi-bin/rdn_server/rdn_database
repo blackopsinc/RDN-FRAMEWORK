@@ -1,0 +1,228 @@
+################################################
+#      Copyright 2004-2011 RDN Networks        #
+################################################
+
+use DBI;
+use threads;
+use MIME::Base64;
+require "/var/www/cgi-bin/rdn_server/config.conf";
+
+($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
+$year = 1900 + $year;
+$mon = 1 + $mon;
+$lengthmon = length($mon);
+$lengthday = length($mday);
+if($lengthmon <= 1){
+		$mon = '0' . $mon;
+}
+if($lengthday <= 1){
+		$mday = '0' . $mday;
+}
+
+$rdn_date = $year . '-' . $mon . '-' . $mday . ' '  . $hour . ':' . $min . ':' . $sec;
+$rdn_client = $ENV{'REMOTE_ADDR'};
+
+sub rdn_audit{
+	$rdn_db_conn = DBI->connect("DBI:mysql:$rdn_db_schema:$rdn_db_host:$rdn_db_port", $rdn_db_user, $rdn_db_pass);
+	$rdn_statement = "INSERT INTO _audit (`id`,`date`,`type`,`client`,`host`,`cmd`,`data`) VALUES (NULL,'$rdn_date','$rdn_type','$rdn_client','$rdn_host','$rdn_cmd','$rdn_data')";
+	$rdn_db_action = $rdn_db_conn->prepare($rdn_statement);
+	$rdn_db_exec = $rdn_db_action->execute;
+	$rdn_db_exec = $rdn_db_action->finish;
+	$rdn_db_exec = $rdn_db_conn->disconnect;
+}
+
+sub rdn_hosts_server_gen{
+	$rdn_db_conn = DBI->connect("DBI:mysql:$rdn_db_schema:$rdn_db_host:$rdn_db_port", $rdn_db_user, $rdn_db_pass);
+	$rdn_statement = "select * from _hosts where type='rdn'";
+	$rdn_db_action = $rdn_db_conn->prepare($rdn_statement);
+	$rdn_db_exec = $rdn_db_action->execute;
+	######## Host Group Header ##########
+	print '<option value="">----------------------------------------------</option>' . "\n";
+	print '<option value="web" class="icons" style="background-image: url(/css/' . $rdn_theme . '/icons/rdn.jpg);">&nbsp;RDN Servers</option>' . "\n";
+	print '<option value="">----------------------------------------------</option>' . "\n";
+	################################
+	while (@row = $rdn_db_action->fetchrow_array) {
+		if($row[2] eq 'rdn'){
+			$rdn_host = encode_base64("http://$row[6]$rdn_port/$rdn_bin/rdn_webcmd_server?host="  . $row[5] . "&user=$row[3]&pass=$row[4]&key=$rdn_global_key&cmd=");
+		}
+		if(($row[2] eq 'web') || ($row[2] eq 'ssh')){
+			$rdn_host = encode_base64("http://$row[6]$rdn_port/$rdn_bin/rdn_webcmd_server?host="  . $row[2] . "&user=$row[3]&pass=$row[4]&key=$rdn_global_key&cmd=");
+		}
+		$rdn_host =~ s/\n//g;
+		if(($row[2] eq 'rdn') && ($row[6] eq $rdn_hostname)){
+			print '<option value="' . $rdn_host. '" selected="selected">(' . $row[2] . ') ' . $row[6]  . '</option>' . "\n";
+		}
+		if(($row[2] eq 'web') || ($row[2] eq 'ssh') || (($row[2] eq 'rdn') && ($row[6] ne $rdn_hostname))){
+			print '<option value="' . $rdn_host. '">(' . $row[2] . ') ' . $row[6]  . '</option>' . "\n";
+		}
+	}
+	$rdn_db_exec = $rdn_db_action->finish;
+	$rdn_db_exec = $rdn_db_conn->disconnect;
+	@row = (); # clear array
+}
+
+sub rdn_hosts_web_gen{
+	$rdn_db_conn = DBI->connect("DBI:mysql:$rdn_db_schema:$rdn_db_host:$rdn_db_port", $rdn_db_user, $rdn_db_pass);
+	$rdn_statement = "select * from _hosts where type='web'";
+	$rdn_db_action = $rdn_db_conn->prepare($rdn_statement);
+	$rdn_db_exec = $rdn_db_action->execute;
+	######## Host Group Header ##########
+	print '<option value="">----------------------------------------------</option>' . "\n";
+	print '<option value="web" class="icons" style="background-image: url(/css/' . $rdn_theme . '/icons/rdn.jpg);">&nbsp;Web Clients</option>' . "\n";
+	print '<option value="">----------------------------------------------</option>' . "\n";
+	################################
+	while (@row = $rdn_db_action->fetchrow_array) {
+		#$rdn_host = encode_base64("http://" . $row[5] . "/cgi-bin/rdn_webshell?key=$rdn_client_key&=");
+		$rdn_host = encode_base64("$row[5]");
+		$rdn_host =~ s/\n//g;
+		print '<option value="' . $rdn_host . '"' . ' class="icons" style="background-image: url(/css/' . $rdn_theme . '/icons/' . $row[2] . '.jpg);" selected="selected">&nbsp;' . $row[6] . '</option>' . "\n";
+	}
+	$rdn_db_exec = $rdn_db_action->finish;
+	$rdn_db_exec = $rdn_db_conn->disconnect;
+	@row = (); # clear array
+}
+
+sub rdn_hosts_ssh_gen{
+	$rdn_db_conn = DBI->connect("DBI:mysql:$rdn_db_schema:$rdn_db_host:$rdn_db_port", $rdn_db_user, $rdn_db_pass);
+	$rdn_statement = "select * from _hosts where type='ssh'";
+	$rdn_db_action = $rdn_db_conn->prepare($rdn_statement);
+	$rdn_db_exec = $rdn_db_action->execute;
+	######## Host Group Header ##########
+	print '<option value="">----------------------------------------------</option>' . "\n";
+	print '<option value="ssh" class="icons" style="background-image: url(/css/' . $rdn_theme . '/icons/rdn.jpg);">&nbsp;SSH Clients</option>' . "\n";
+	print '<option value="">----------------------------------------------</option>' . "\n";
+	################################	
+	while (@row = $rdn_db_action->fetchrow_array) {
+	print '<option value="' . $row[5] . '"' . ' class="icons" style="background-image: url(/css/' . $rdn_theme . '/icons/' . $row[2] . '.jpg);">&nbsp;' . $row[6] . '</option>' . "\n";	
+	}
+	$rdn_db_exec = $rdn_db_action->finish;
+	$rdn_db_exec = $rdn_db_conn->disconnect;
+	@row = (); # clear array
+}
+
+sub rdn_hosts_web_exec{
+	$rdn_db_conn = DBI->connect("DBI:mysql:$rdn_db_schema:$rdn_db_host:$rdn_db_port", $rdn_db_user, $rdn_db_pass);
+	$rdn_statement = "select * from _hosts where type='web'";
+	$rdn_db_action = $rdn_db_conn->prepare($rdn_statement);
+	$rdn_db_exec = $rdn_db_action->execute;	
+	while (@row = $rdn_db_action->fetchrow_array) {
+		if ($rdn_sudo eq '1'){
+		$rdn_host = encode_base64("http://" . $row[5] . "/cgi-bin/rdn_webshell?key=$rdn_client_key&=");
+		$rdn_host =~ s/\n//g;
+		$rdn_securecmd = securecmd_web . " " . "'" . $rdn_host . "'" . " " . "'" . 'sudo ' . $rdn_cmd . "'";
+		}
+		else{
+		$rdn_host = encode_base64("http://" . $row[5] . "/cgi-bin/rdn_webshell?key=$rdn_client_key&=");
+		$rdn_host =~ s/\n//g;
+		$rdn_securecmd = securecmd_web . " " . $rdn_host . " " . "'" . $rdn_cmd . "'";
+		}
+		#
+		# Synchronous Calls
+		# 				
+		sub exec{
+		push(@output,`$rdn_securecmd`);
+		if (@output eq "0"){
+			print 'RDNetworks - Command returned null on (' . $row[5] . ")\n";
+		}
+		print @output;
+		@output = (); # clear array
+		}
+		$thr = threads->create(\&exec);
+		#$thr->detach;
+		$thr->join;
+	}
+	$rdn_db_exec = $rdn_db_action->finish;
+	$rdn_db_exec = $rdn_db_conn->disconnect;
+	@row = (); # clear array
+}
+
+sub rdn_hosts_ssh_exec{
+	$target = @_;
+	$rdn_db_conn = DBI->connect("DBI:mysql:$rdn_db_schema:$rdn_db_host:$rdn_db_port", $rdn_db_user, $rdn_db_pass);
+	$rdn_statement = "select * from _hosts where type='ssh'";
+	$rdn_db_action = $rdn_db_conn->prepare($rdn_statement);
+	$rdn_db_exec = $rdn_db_action->execute;	
+	while (@row = $rdn_db_action->fetchrow_array) {
+		if ($rdn_sudo eq '1'){
+		$rdn_securecmd = securecmd_ssh . " " . $row[3] . " " . $row[5]  . " " . "'" . 'sudo ' . $rdn_cmd . "' & 2>/dev/null >/dev/null";
+		}
+		else{
+		$rdn_securecmd = securecmd_ssh . " " . $row[3] . " " . $row[5] . " " . "'" . $rdn_cmd . "'";
+		}
+		#
+		# Synchronous Calls
+		# 				
+		sub exec{
+		push(@output,`$rdn_securecmd`);
+		if (@output eq "0"){
+			print 'RDNetworks - Command returned null on (' . $row[5] . ")\n";
+		}
+		print @output;
+		@output = (); # clear array
+		}
+		$thr = threads->create(\&exec);
+		#$thr->detach;
+		$thr->join;
+	}
+	$rdn_db_exec = $rdn_db_action->finish;
+	$rdn_db_exec = $rdn_db_conn->disconnect;
+	@row = (); # clear array
+}
+
+
+sub rdn_get_user_pass {
+    ($host) = @_;
+	$rdn_db_conn = DBI->connect("DBI:mysql:$rdn_db_schema:$rdn_db_host:$rdn_db_port", $rdn_db_user, $rdn_db_pass);
+	$rdn_statement = "select * from _hosts where ip='$host'";
+	$rdn_db_action = $rdn_db_conn->prepare($rdn_statement);
+	$rdn_db_exec = $rdn_db_action->execute;	
+	while (@row = $rdn_db_action->fetchrow_array) {
+		$user= $row[3];
+	}
+	$rdn_db_exec = $rdn_db_action->finish;
+	$rdn_db_exec = $rdn_db_conn->disconnect;
+	@row = (); # clear array
+    return $user;
+}
+
+sub rdn_get_key {
+    ($type) = @_;
+	$rdn_db_conn = DBI->connect("DBI:mysql:$rdn_db_schema:$rdn_db_host:$rdn_db_port", $rdn_db_user, $rdn_db_pass);
+	$rdn_statement = "select * from _keys where type='$type'";
+	$rdn_db_action = $rdn_db_conn->prepare($rdn_statement);
+	$rdn_db_exec = $rdn_db_action->execute;	
+	while (@row = $rdn_db_action->fetchrow_array) {
+		$key = $row[2];
+	}
+	$rdn_db_exec = $rdn_db_action->finish;
+	$rdn_db_exec = $rdn_db_conn->disconnect;
+	@row = (); # clear array
+    return $key;
+}
+
+sub rdn_set_key {
+    ($type) = @_;
+	$key = `securekey`;
+	$rdn_db_conn = DBI->connect("DBI:mysql:$rdn_db_schema:$rdn_db_host:$rdn_db_port", $rdn_db_user, $rdn_db_pass);
+	$rdn_statement = "UPDATE _keys SET `key`='$key' WHERE type='$type' LIMIT 1";
+	$rdn_db_action = $rdn_db_conn->prepare($rdn_statement);
+	$rdn_db_exec = $rdn_db_action->execute;	
+	$rdn_db_exec = $rdn_db_action->finish;
+	$rdn_db_exec = $rdn_db_conn->disconnect;
+	return $key;
+}
+
+sub rdn_login{
+	$rdn_db_conn = DBI->connect("DBI:mysql:$rdn_db_schema:$rdn_db_host:$rdn_db_port", $rdn_db_user, $rdn_db_pass);
+	$rdn_statement = "select * from _login where user = 'admin'";
+	$rdn_db_action = $rdn_db_conn->prepare($rdn_statement);
+	$rdn_db_exec = $rdn_db_action->execute;
+	while (@row = $rdn_db_action->fetchrow_array) {
+		$user_pass_stored = $row[2];
+	}
+	$rdn_db_exec = $rdn_db_action->finish;
+	$rdn_db_exec = $rdn_db_conn->disconnect;
+	@row = (); # clear array
+}
+
+1;

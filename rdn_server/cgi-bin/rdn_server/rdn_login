@@ -1,0 +1,40 @@
+#!/usr/bin/perl
+################################################
+#      Copyright 2004-2011 RDN Networks        #
+################################################
+
+use CGI;
+$rdn = new CGI;
+$user_name = $rdn->param('username');
+$user_pass = $rdn->param('password');
+require "/var/www/cgi-bin/rdn_server/config.conf";
+require "/var/www/cgi-bin/rdn_server/rdn_database";
+
+&rdn_login;
+
+if (($user_name eq 'admin') && ($user_pass eq $user_pass_stored)){
+	#&rdn_set_key("client");
+	&rdn_set_key("global");
+	$key = &rdn_set_key("session");
+	print "Location: $rdn_server$rdn_port/$rdn_bin/rdn_console?target=console&key=" . $key . "\n\n";
+	exit;
+}
+
+else {
+print $rdn->header("text/html");
+print <<ALERT;
+<html>
+<head>
+<link href="$rdn_server$rdn_port/css/$rdn_theme/rdn_output.css" rel="stylesheet" type="text/css">
+<script language="javascript" type="text/javascript">
+function show_alert(){
+window.alert("RDNetworks - Access denied! ( $rdn_hostname )", "Null");
+parent.frames.location.replace ("$rdn_server$rdn_port/");
+}
+</script>
+<body onLoad="show_alert();">
+</body>
+</html>
+ALERT
+exit;
+}

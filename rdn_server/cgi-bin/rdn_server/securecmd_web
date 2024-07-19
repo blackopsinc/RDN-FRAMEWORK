@@ -1,0 +1,36 @@
+#!/usr/bin/perl
+################################################
+#      Copyright 2004-2011 RDN Networks        #
+################################################
+
+use LWP::UserAgent;
+use MIME::Base64;
+require "/var/www/cgi-bin/rdn_server/rdn_database";
+
+if (@ARGV < 2){
+	print "\nUsage: $0 <host> <command>\n\n";
+};
+
+if (@ARGV == 2){
+	&rdn_cmd;
+	$rdn_host = $host_decode;
+	&rdn_audit;
+	exit;
+}
+
+else{
+	exit;
+}
+
+sub rdn_cmd{
+$rdn_host = $ARGV[0];
+$rdn_cmd = $ARGV[1];
+$rdn_type = "web";
+$host_decode = decode_base64($rdn_host);
+$browser = LWP::UserAgent->new;
+$target= $host_decode . $rdn_cmd;
+$response = $browser->agent('RDN Client');
+$response = $browser->get($target);
+$rdn_data = $response->content;
+print $rdn_data;
+}

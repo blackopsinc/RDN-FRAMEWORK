@@ -1,0 +1,116 @@
+/* RDN Console Style */
+
+html {
+	height:100%;
+}
+
+body {
+	background-color: #999999;
+	height:100%; 
+	margin:4; 
+	padding:4;
+}
+
+body.login {
+	background-color: #222222;
+	height:100%; 
+	margin:4; 
+	padding:4;
+	scrollbar-width: 0px;
+}
+
+a:link, a:visited, a:active,a:hover {
+	color: #ffffff;
+	text-decoration: none;
+	font-family: tahoma;
+	font-size: 11px
+}
+
+div{
+	color: #eeeeee;
+	font-family: tahoma; 	
+	font-weight: none; 
+	font-size: 11px; 
+}
+
+form {
+	color: #eeeeee; 
+	font-family: tahoma; 
+	font-weight: none; 
+	font-size: 10px; 
+	background-color: #999999;
+	display:inline;
+}
+
+input, select {
+	-webkit-border-radius: 5px;
+	-moz-border-radius: 5px;
+	border-radius: 5px;
+	border: 2px solid gray;
+	color: #666666;
+	font-family: tahoma; 
+	font-weight: none; 
+	font-size: 10px; 
+	background-color: #ffffff;
+}
+
+option.icons {
+	padding: 2px 0 0px 15px; 
+	background-repeat: no-repeat; 
+	background-position: 1px 0px; 
+	align: left;
+}
+
+/* RDN Button Style*/
+
+input.buttons {
+	-webkit-border-radius: 5px;
+	-moz-border-radius: 5px;
+	border-radius: 5px;
+	border: 2px solid #666666;
+	color: #ffffff;
+	font-family: tahoma; 
+	font-weight: none; 
+	font-size: 10px; 
+	background-color: #e43434;
+}
+
+/* RDN Editor Style */
+
+p, tr, td, ul, li, pre {
+	color: #eeeeee;
+	text-decoration: none;
+	font-family: tahoma; 	
+	font-size: 11px
+}
+
+textarea {
+	background-color: #222222;
+	color: #cccccc; 
+	width: 100%;
+    height: 88%;
+    text-decoration: none;
+	font-size: 11px;
+}
+
+/* RDN Table Layout */
+
+table {
+	border-width: 0px 0px 0px 0px;
+	border-spacing: 0px;
+	border-style: hidden hidden hidden hidden;
+	border-collapse: collapse;
+}
+
+table th {
+	border-width: 0px 0px 0px 0px;
+	padding: 0px 0px 0px 0px;
+	-moz-border-radius: 0px 0px 0px 0px;
+}
+
+table td {
+	border-width: 0px 0px 0px 0px;
+	padding: 0px 0px 0px 0px;
+	border-style: hidden hidden hidden hidden;
+	-moz-border-radius: 0px 0px 0px 0px;
+}

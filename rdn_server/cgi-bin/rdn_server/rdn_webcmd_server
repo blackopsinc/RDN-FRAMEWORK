@@ -1,0 +1,124 @@
+#!/usr/bin/perl
+################################################
+#      Copyright 2004-2011 RDN Networks        #
+################################################
+
+use CGI;
+$rdn = new CGI;
+$rdn_cmd = $rdn->param('cmd');
+$rdn_host = $rdn->param('host');
+$rdn_user = $rdn->param('user');
+$rdn_pass = $rdn->param('pass');
+$rdn_sudo = $rdn->param('sudo');
+$rdn_keyget = $rdn->param('key');
+require "/var/www/cgi-bin/rdn_server/config.conf";
+require "/var/www/cgi-bin/rdn_server/rdn_session";
+require "/var/www/cgi-bin/rdn_server/rdn_database";
+
+### Check for proper client and keys###
+$rdn_agent = $ENV{'HTTP_USER_AGENT'};
+if(($rdn_keyget ne $rdn_key) && ($rdn_keyget ne $rdn_global_key) || ($rdn_agent ne "RDN Client")){
+#
+# May be an Issue on remote servers
+#
+&rdn_expiresession;
+print <<ALERT;
+<html>
+<head>
+<link href="$rdn_server$rdn_port/css/$rdn_theme/rdn_output.css" rel="stylesheet" type="text/css">
+<script language="javascript" type="text/javascript">
+function show_alert(){
+window.alert("RDNetworks - Security Policy! ( $rdn_hostname )", "Null");
+parent.frames.location.replace ("$rdn_server$rdn_port/");
+}
+</script>
+<body onLoad="show_alert();">
+</body>
+</html>
+ALERT
+exit;
+}
+
+if (($rdn_cmd ne "") && ($rdn_host ne "")){
+print $rdn->header("text/html");
+#
+# WEB/SSH Batch Commands
+#
+if ($rdn_host eq 'web'){
+	&rdn_hosts_web_exec;
+	exit;	
+}
+
+if ($rdn_host eq 'ssh'){
+	&rdn_hosts_ssh_exec;
+	exit;	
+}
+#
+# RDN Single Commands
+#
+if ($rdn_host eq 'localhost'){
+	if ($rdn_sudo eq '1'){
+		$rdn_cmd = 'sudo ' . $rdn_cmd;
+		push(@output, `$rdn_cmd`);
+		if (@output eq "0"){
+			print 'RDNetworks - Command returned null on (' . $rdn_host . ")\n";
+			exit;
+		}
+		print @output;
+	}
+	else {
+		push(@output, `$rdn_cmd`);
+		if (@output eq "0"){
+			print 'RDNetworks - Command returned null on (' . $rdn_host . ")\n";
+			exit;
+		}
+		print @output;
+	}
+	exit;	
+}
+#
+# WEB/SSH Single Commands
+#
+else{
+	if ($rdn_sudo eq '1'){
+		$rdn_user = &rdn_get_user_pass("$rdn_host");
+		$rdn_securecmd = securecmd_ssh . " " . $rdn_user . " " . $rdn_host . " " . "'" . 'sudo ' . $rdn_cmd . "'";
+		push(@output,`$rdn_securecmd`); 		
+		if (@output eq "0"){
+			print 'RDNetworks - Command returned null on (' . $rdn_host . ")\n";
+			exit;
+		}
+		print @output;
+	}
+	else{
+		$rdn_user = &rdn_get_user_pass("$rdn_host");
+		$rdn_securecmd = securecmd_ssh . " " . $rdn_user . " " . $rdn_host . " " . "'" . $rdn_cmd . "'";
+		push(@output,`$rdn_securecmd`);
+		if (@output eq "0"){
+			print 'RDNetworks - Command returned null on (' . $rdn_host . ")\n";
+			exit;
+		}
+		print @output;
+	}	
+	exit;
+	} 
+}
+
+else{
+&rdn_expiresession;
+print <<ALERT;
+<html>
+<head>
+<link href="$rdn_server$rdn_port/css/$rdn_theme/rdn_output.css" rel="stylesheet" type="text/css">
+<script language="javascript" type="text/javascript">
+function show_alert(){
+window.alert("RDNetworks - Security Policy! ( $rdn_hostname )", "Null");
+parent.frames.location.replace ("$rdn_server$rdn_port/");
+}
+</script>
+<body onLoad="show_alert();">
+</body>
+</html>
+ALERT
+exit;
+}

@@ -1,0 +1,13 @@
+#!/usr/bin/perl
+################################################
+#      Copyright 2004-2011 RDN Networks        #
+################################################
+sub gen{
+@chars=('a'..'z','A'..'Z','0'..'9');
+foreach(1..32){
+      $rand.=$chars[rand @chars];
+}
+return $rand;
+}
+$key=&gen;
+print $key;
