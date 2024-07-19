@@ -11,7 +11,7 @@ Migrated RDN CnC Framework to docker/codespace - Built this 20 years ago!
 - Manual update database _hosts table via SQL if you want to add another remote host for CnC ***(Reduced Function)***
   
 <p align="center">
-  <img src="https://github.com/blackopsinc/RDN/blob/main/rdn_server/html/css/default/rdn_overview.jpg" width="100%"/>
+  <img src="https://github.com/blackopsinc/RDN-Framework/blob/main/rdn_server/html/css/default/rdn_overview.jpg?raw=true" width="100%"/>
 </p>
 
 
