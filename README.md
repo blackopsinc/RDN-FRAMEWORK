@@ -4,7 +4,7 @@
   <img src="https://github.com/blackopsinc/RDN/blob/main/rdn_server/html/css/default/rdn_logo.jpg?raw=true" width="100%"/>
 </p>-->
 
-Migrated RDN CnC Framework to docker/codespace - Built this 20 years ago!
+Migrated RDN CnC Framework to docker/codespace - Designed & built this 20 years ago!
 
 - Included Web Client Capabilities ***(Simple Web Client for testing)***
 - Removed Exploit, and Build Framework ***(Reduced Function)***
@@ -13,8 +13,6 @@ Migrated RDN CnC Framework to docker/codespace - Built this 20 years ago!
 <p align="center">
   <img src="https://github.com/blackopsinc/RDN-Framework/blob/main/rdn_server/html/css/default/rdn_overview.jpg?raw=true" width="80%"/>
 </p>
-
-
 
 # Installation Instructions (Codespace)
 
