@@ -16,7 +16,7 @@ Migrated RDN CnC Framework to docker/codespace - Designed & built this 20 years 
 
 # Installation Instructions (Codespace)
 
-1. Modify rdn_server/cgi-bin/rdn_server/config.conf - replace <codespacename> with DNS record of the namespace eg "orange-space-journey-5xj79qgjrvp2vwx6"
+1. Modify rdn_server/cgi-bin/rdn_server/config.conf - replace ```<codespacename>``` with DNS record of the namespace eg "orange-space-journey-5xj79qgjrvp2vwx6"
 ```perl
 #
 # Local Setup
