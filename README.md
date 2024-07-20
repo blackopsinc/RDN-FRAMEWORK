@@ -30,7 +30,7 @@ Migrated RDN CnC Framework to docker/codespace - Designed & built this 20 years 
 $rdn_hostname = "<codespacename>-8080.app.github.dev";
 $rdn_server = "https://" . $rdn_hostname;
 ```
-2. Run Docker Compose - make take a few minutes to start
+2. Run Docker Compose - make take a few minutes to startup
 ```console
 @blackopsinc ➜ .../RDN (main) $ docker-compose up -d
 ```
