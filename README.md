@@ -18,7 +18,7 @@ Migrated RDN CnC Framework to docker/codespace - Built this 20 years ago!
 
 # Installation Instructions (Codespace)
 
-1. Modify rdn_server/cgi-bin/rdn_server/config.conf 
+1. Modify rdn_server/cgi-bin/rdn_server/config.conf - replace <codespacename> with DNS record of the namespace eg "orange-space-journey-5xj79qgjrvp2vwx6"
 ```perl
 #
 # Local Setup
@@ -32,11 +32,11 @@ Migrated RDN CnC Framework to docker/codespace - Built this 20 years ago!
 $rdn_hostname = "<codespacename>-8080.app.github.dev";
 $rdn_server = "https://" . $rdn_hostname;
 ```
-2. Run Docker Compose
+2. Run Docker Compose - make take a few minutes to start
 ```console
 @blackopsinc ➜ .../RDN (main) $ docker-compose up -d
 ```
-3. Open Browser to Codespace
+3. Open Browser to Codespace - make take a few minutes to startup
 ``` code
 https://<codespacename>-8080.app.github.dev/
 username: admin
