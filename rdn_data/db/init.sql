@@ -78,7 +78,15 @@ SET character_set_client = @saved_cs_client;
 
 LOCK TABLES `_hosts` WRITE;
 /*!40000 ALTER TABLE `_hosts` DISABLE KEYS */;
-INSERT INTO `_hosts` VALUES (1,'web','nix','','','http://localhost:8080/server/client?cmd=','localhost','web');
+INSERT INTO `_hosts` VALUES (1,'web','nix','','','http://localhost:8080/server/client?cmd=','server1.domain.local','web');
+INSERT INTO `_hosts` VALUES (2,'web','nix','','','http://localhost:8080/server/client?cmd=','app-server02.example.com','web');
+INSERT INTO `_hosts` VALUES (3,'web','nix','','','http://localhost:8080/server/client?cmd=','proxy01.internal.net','web');
+INSERT INTO `_hosts` VALUES (4,'web','nix','','','http://localhost:8080/server/client?cmd=','vm-35-98.cloudprovider.net','web');
+INSERT INTO `_hosts` VALUES (5,'web','nix','','','http://localhost:8080/server/client?cmd=','db-backup-host.domain.org','web');
+INSERT INTO `_hosts` VALUES (6,'web','nix','','','http://localhost:8080/server/client?cmd=','api-gateway.prod.local','web');
+INSERT INTO `_hosts` VALUES (7,'web','nix','','','http://localhost:8080/server/client?cmd=','analytics-server1.cloud.local','web');
+INSERT INTO `_hosts` VALUES (8,'web','nix','','','http://localhost:8080/server/client?cmd=','load-balancer01.internal','web');
+
 /*!40000 ALTER TABLE `_hosts` ENABLE KEYS */;
 UNLOCK TABLES;
 
