@@ -15,6 +15,7 @@ services:
     - /dev/net/tun:/dev/net/tun
     cap_add:
     - NET_ADMIN
+    restart: always
     hostname: rdn_server
     networks:
       rdn_net:
