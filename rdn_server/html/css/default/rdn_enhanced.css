@@ -1,0 +1,410 @@
+/* RDN Framework Enhanced Styles v7.0 */
+
+:root {
+    --rdn-primary: #0d6efd;
+    --rdn-secondary: #6c757d;
+    --rdn-success: #198754;
+    --rdn-danger: #dc3545;
+    --rdn-warning: #ffc107;
+    --rdn-info: #0dcaf0;
+    --rdn-dark: #212529;
+    --rdn-darker: #1a1e21;
+    --rdn-light: #f8f9fa;
+    --rdn-border: #495057;
+    --rdn-console-bg: #0c0c0c;
+    --rdn-console-text: #00ff00;
+}
+
+/* Global Styles */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, var(--rdn-dark) 0%, var(--rdn-darker) 100%);
+    min-height: 100vh;
+}
+
+/* Navigation Enhancements */
+.navbar-brand img {
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.navbar-nav .nav-link {
+    transition: all 0.3s ease;
+    border-radius: 6px;
+    margin: 0 2px;
+}
+
+.navbar-nav .nav-link:hover {
+    background-color: rgba(255,255,255,0.1);
+    transform: translateY(-1px);
+}
+
+.navbar-nav .nav-link.active {
+    background-color: rgba(255,255,255,0.2);
+    font-weight: 600;
+}
+
+/* Card Enhancements */
+.card {
+    border: 1px solid var(--rdn-border);
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+}
+
+.card-header {
+    border-bottom: 1px solid var(--rdn-border);
+    background: rgba(255,255,255,0.05);
+    border-radius: 12px 12px 0 0 !important;
+}
+
+/* Status Cards */
+.card.bg-success,
+.card.bg-info,
+.card.bg-warning,
+.card.bg-danger {
+    background: linear-gradient(135deg, var(--bs-bg-opacity, 1), rgba(255,255,255,0.1)) !important;
+    border: none;
+}
+
+.card.bg-success {
+    background: linear-gradient(135deg, var(--rdn-success), #20c997) !important;
+}
+
+.card.bg-info {
+    background: linear-gradient(135deg, var(--rdn-info), #17a2b8) !important;
+}
+
+.card.bg-warning {
+    background: linear-gradient(135deg, var(--rdn-warning), #fd7e14) !important;
+}
+
+.card.bg-danger {
+    background: linear-gradient(135deg, var(--rdn-danger), #e74c3c) !important;
+}
+
+/* Table Enhancements */
+.table-dark {
+    --bs-table-bg: rgba(33, 37, 41, 0.8);
+    backdrop-filter: blur(10px);
+}
+
+.table-dark th {
+    border-color: var(--rdn-border);
+    background-color: rgba(255,255,255,0.05);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+}
+
+.table-dark td {
+    border-color: rgba(255,255,255,0.1);
+    vertical-align: middle;
+}
+
+.table-striped > tbody > tr:nth-of-type(odd) > td {
+    background-color: rgba(255,255,255,0.02);
+}
+
+/* Console Styles */
+.console-output {
+    background-color: var(--rdn-console-bg);
+    color: var(--rdn-console-text);
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+    padding: 15px;
+    border-radius: 8px;
+    height: 400px;
+    overflow-y: auto;
+    border: 1px solid #333;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+.console-output::-webkit-scrollbar {
+    width: 8px;
+}
+
+.console-output::-webkit-scrollbar-track {
+    background: #1a1a1a;
+}
+
+.console-output::-webkit-scrollbar-thumb {
+    background: #555;
+    border-radius: 4px;
+}
+
+.console-output::-webkit-scrollbar-thumb:hover {
+    background: #777;
+}
+
+.console-line {
+    margin-bottom: 5px;
+    line-height: 1.4;
+}
+
+.console-prompt {
+    color: #00ff00;
+    font-weight: bold;
+}
+
+.console-command {
+    color: #ffffff;
+}
+
+.console-output-text {
+    color: #cccccc;
+}
+
+.console-error {
+    color: #ff6b6b;
+}
+
+.console-success {
+    color: #51cf66;
+}
+
+/* Form Enhancements */
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--rdn-primary);
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+.form-control.bg-dark,
+.form-select.bg-dark {
+    background-color: var(--rdn-darker) !important;
+    border-color: var(--rdn-border);
+    color: var(--rdn-light) !important;
+}
+
+.form-control.bg-secondary,
+.form-select.bg-secondary {
+    background-color: rgba(108, 117, 125, 0.3) !important;
+    border-color: var(--rdn-border);
+    color: var(--rdn-light) !important;
+}
+
+/* Button Enhancements */
+.btn {
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    font-size: 0.875rem;
+    letter-spacing: 0.5px;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--rdn-primary), #0056b3);
+    border: none;
+}
+
+.btn-success {
+    background: linear-gradient(135deg, var(--rdn-success), #157347);
+    border: none;
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, var(--rdn-danger), #b02a37);
+    border: none;
+}
+
+.btn-warning {
+    background: linear-gradient(135deg, var(--rdn-warning), #d39e00);
+    border: none;
+    color: #000;
+}
+
+.btn-outline-light:hover {
+    background-color: rgba(255,255,255,0.1);
+    border-color: rgba(255,255,255,0.3);
+}
+
+/* Modal Enhancements */
+.modal-content {
+    border: 1px solid var(--rdn-border);
+    border-radius: 12px;
+    backdrop-filter: blur(20px);
+}
+
+.modal-header {
+    border-bottom: 1px solid var(--rdn-border);
+}
+
+.modal-footer {
+    border-top: 1px solid var(--rdn-border);
+}
+
+/* Loading Overlay */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.7);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    backdrop-filter: blur(5px);
+}
+
+.loading-overlay.show {
+    display: flex;
+}
+
+/* Status Badges */
+.status-badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-active {
+    background-color: var(--rdn-success);
+    color: white;
+}
+
+.status-inactive {
+    background-color: var(--rdn-secondary);
+    color: white;
+}
+
+.status-error {
+    background-color: var(--rdn-danger);
+    color: white;
+}
+
+.status-maintenance {
+    background-color: var(--rdn-warning);
+    color: black;
+}
+
+/* Chart Container */
+.chart-container {
+    position: relative;
+    height: 300px;
+    width: 100%;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(13, 110, 253, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(13, 110, 253, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(13, 110, 253, 0);
+    }
+}
+
+.pulse {
+    animation: pulse 2s infinite;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .card-body {
+        padding: 1rem;
+    }
+    
+    .console-output {
+        height: 250px;
+        font-size: 12px;
+    }
+    
+    .table-responsive {
+        font-size: 0.875rem;
+    }
+    
+    .btn {
+        font-size: 0.8rem;
+        padding: 0.5rem 1rem;
+    }
+}
+
+/* Dark Theme Scrollbars */
+::-webkit-scrollbar {
+    width: 12px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--rdn-darker);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--rdn-secondary);
+    border-radius: 6px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #8a9ba8;
+}
+
+/* Content Section Transitions */
+.content-section {
+    transition: all 0.3s ease;
+}
+
+.content-section.d-none {
+    opacity: 0;
+    transform: translateX(-20px);
+}
+
+.content-section:not(.d-none) {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+/* Utility Classes */
+.text-shadow {
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+}
+
+.glass-effect {
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.2);
+}
+
+.hover-lift {
+    transition: transform 0.3s ease;
+}
+
+.hover-lift:hover {
+    transform: translateY(-5px);
+}
