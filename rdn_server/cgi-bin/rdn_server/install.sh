@@ -1,5 +1,9 @@
 #!/bin/sh
 
+# Install required Perl modules
+apt-get update -qq
+apt-get install -y libjson-perl libdbi-perl libdbd-mysql-perl
+
 chown -v www-data.www-data /var/www/cgi-bin/* -R
 chmod -v 755 /var/www/cgi-bin/rdn_server/client
 chmod -v 755 /var/www/cgi-bin/rdn_server/rdn_console

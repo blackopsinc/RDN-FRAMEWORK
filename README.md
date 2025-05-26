@@ -1,390 +1,332 @@
-# RDN Framework v7.0 - Enhanced Command & Control Platform
+# RDN Framework v7.0 - Enhanced Command & Control
 
-<p align="center">
-  <img src="rdn_server/html/css/default/rdn_logo.jpg" width="200"/>
-</p>
+## Overview
 
-<p align="center">
-  <strong>Modern, Secure, and Scalable Command & Control Framework</strong>
-</p>
+The RDN Framework is a powerful web-based command and control system for managing multiple hosts and executing remote commands. This enhanced version includes modern security features, improved UI, and comprehensive audit logging.
 
-<p align="center">
-  <img src="https://img.shields.io/badge/version-7.0.0-blue.svg" alt="Version">
-  <img src="https://img.shields.io/badge/docker-ready-green.svg" alt="Docker">
-  <img src="https://img.shields.io/badge/security-enhanced-red.svg" alt="Security">
-  <img src="https://img.shields.io/badge/ui-modern-purple.svg" alt="Modern UI">
-</p>
+## Quick Start
 
-## 🚀 What's New in v7.0
+### Prerequisites
+- Docker and Docker Compose
+- Git
 
-The RDN Framework has been completely modernized with enterprise-grade features, enhanced security, and a beautiful responsive interface. Originally designed 20 years ago, this version brings the framework into the modern era while maintaining its powerful core functionality.
+### Installation
 
-### ✨ Major Enhancements
-
-- **🎨 Modern Web Interface**: Complete UI overhaul with Bootstrap 5, responsive design, and dark theme
-- **🔒 Enhanced Security**: Multi-factor authentication, rate limiting, session management, and audit logging
-- **📊 Real-time Dashboard**: Live metrics, charts, and system monitoring with Chart.js
-- **🐳 Docker Orchestration**: Multi-container setup with health checks and service dependencies
-- **⚡ Performance Optimizations**: Redis caching, connection pooling, and optimized queries
-- **🔧 Advanced Configuration**: Environment-based configs, feature flags, and centralized settings
-- **📱 Mobile Responsive**: Works seamlessly on desktop, tablet, and mobile devices
-- **🌐 WebSocket Support**: Real-time updates and live command execution
-- **🛡️ Nginx Reverse Proxy**: SSL termination, rate limiting, and security headers
-
-## 🏗️ Architecture Overview
-
-```mermaid
-graph TB
-    A[Client Browser] --> B[Nginx Reverse Proxy]
-    B --> C[RDN Server Container]
-    C --> D[MySQL Database]
-    C --> E[Redis Cache]
-    C --> F[Target Hosts]
-    
-    subgraph "Docker Network"
-        B
-        C
-        D
-        E
-    end
-    
-    subgraph "External"
-        A
-        F
-    end
-```
-
-### 🔧 Technology Stack
-
-- **Frontend**: HTML5, CSS3, JavaScript ES6+, Bootstrap 5, Chart.js
-- **Backend**: Perl CGI (Legacy), Enhanced with modern practices
-- **Database**: MySQL 8.0 with optimized schema
-- **Cache**: Redis 7 for session management and performance
-- **Proxy**: Nginx with SSL/TLS and security headers
-- **Containerization**: Docker Compose with health checks
-- **Security**: Rate limiting, CSRF protection, audit logging
-
-## 📋 Prerequisites
-
-- Docker Engine 20.10+
-- Docker Compose 2.0+
-- 4GB RAM minimum (8GB recommended)
-- 10GB disk space
-
-## 🚀 Quick Start
-
-### 1. Clone and Setup
-
+1. Clone the repository:
 ```bash
 git clone <repository-url>
 cd RDN-FRAMEWORK
 ```
 
-### 2. Configuration
-
-#### For Local Development:
+2. Start the services:
 ```bash
-# The default configuration works out of the box
-# Default credentials: admin / changeme123!
-```
-
-#### For GitHub Codespaces:
-```bash
-# Edit the configuration file
-nano rdn_server/cgi-bin/rdn_server/config.conf
-
-# Replace <codespace> with your actual codespace name
-# Example: "orange-space-journey-5xj79qgjrvp2vwx6"
-$rdn_hostname = "your-codespace-name-8080.app.github.dev";
-$rdn_server = "https://" . $rdn_hostname;
-```
-
-#### For Production:
-```bash
-# Update configuration for your domain
-$rdn_hostname = "your-domain.com";
-$rdn_server = "https://" . $rdn_hostname;
-
-# Generate SSL certificates
-mkdir -p nginx/ssl
-openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-  -keyout nginx/ssl/rdn.key \
-  -out nginx/ssl/rdn.crt
-```
-
-### 3. Launch the Framework
-
-```bash
-# Start all services
 docker-compose up -d
-
-# Check service status
-docker-compose ps
-
-# View logs
-docker-compose logs -f
 ```
 
-### 4. Access the Interface
+3. Wait for all services to be healthy:
+```bash
+docker-compose ps
+```
 
-- **Local**: http://localhost:8080
-- **Codespace**: https://your-codespace-name-8080.app.github.dev
-- **Production**: https://your-domain.com
+### Access the Application
 
-**Default Login:**
-- Username: `admin`
-- Password: `changeme123!`
+#### Local Development
+- **Web Interface**: http://localhost:8080/server/
+- **Health Check**: http://localhost:8080/server/health
 
-> ⚠️ **Security Note**: Change the default password immediately after first login!
+#### GitHub Codespaces
+- **Web Interface**: https://[codespace-name]-8080.app.github.dev/server/
+- **Health Check**: https://[codespace-name]-8080.app.github.dev/server/health
 
-## 🎯 Features
+## Login Instructions
 
-### 🖥️ Dashboard
-- Real-time system metrics and statistics
-- Interactive charts showing command activity
-- Host status overview with visual indicators
-- Recent activity feed with detailed logging
+### Default Credentials
+- **Username**: `admin`
+- **Password**: `admin123`
 
-### 🖧 Host Management
-- Add, edit, and delete managed hosts
-- Support for multiple connection types (Web, SSH, RDP, API)
-- Health monitoring with automatic status updates
-- Bulk operations and host grouping
+### First Login
+1. Navigate to the web interface URL
+2. You'll see the RDN Framework dashboard
+3. If prompted for login, use the credentials above
+4. **Important**: Change the default password immediately after first login
 
-### 💻 Web Console
+### Security Notes
+- The default password should be changed in production
+- Enable 2FA for enhanced security
+- Review and update the allowed IP ranges in the configuration
+
+## Features
+
+### Dashboard
+- Real-time system metrics
+- Active host monitoring
+- Command execution statistics
+- Recent activity logs
+
+### Host Management
+- Add/remove hosts
+- Support for multiple connection types (Web, SSH, RDP, API, Database)
+- Health monitoring
+- Grouping and tagging
+
+### Web Console
 - Interactive terminal interface
-- Command history and auto-completion
-- Real-time command execution
-- Multi-host session management
+- Multi-host command execution
+- Command history
+- Real-time output
 
-### 🔍 Audit & Logging
-- Comprehensive audit trail
-- Security event monitoring
-- Command execution logging
-- User activity tracking
+### Security Features
+- Session management
+- Audit logging
+- IP-based access control
+- Rate limiting
+- Encrypted communications
 
-### ⚙️ System Settings
-- Centralized configuration management
-- Feature flags and toggles
-- Security policy configuration
-- Backup and restore functionality
+## Configuration
 
-## 🔒 Security Features
+### Database Configuration
+The system uses MySQL for data storage:
+- **Host**: rdn-data container (172.20.0.200)
+- **Database**: rdn
+- **User**: root
+- **Password**: changeme (change in production)
 
-### Authentication & Authorization
-- Multi-factor authentication (2FA) support
-- Role-based access control (RBAC)
-- Session management with Redis
-- Account lockout protection
-
-### Network Security
-- Rate limiting on all endpoints
-- CSRF protection
-- XSS prevention
-- SQL injection protection
-- Secure headers (HSTS, CSP, etc.)
-
-### Audit & Monitoring
-- Comprehensive audit logging
-- Real-time security alerts
-- Failed login attempt tracking
-- Command execution monitoring
-
-### Data Protection
-- Encrypted password storage
-- Secure session handling
-- Database connection encryption
-- Sensitive data masking
-
-## 📊 Database Schema
-
-The enhanced database schema includes:
-
-- **Users**: Enhanced user management with 2FA support
-- **Hosts**: Improved host tracking with metadata
-- **Commands**: Detailed command execution history
-- **Sessions**: Secure session management
-- **Audit**: Comprehensive audit logging
-- **Notifications**: Alert and notification system
-- **System Config**: Centralized configuration storage
-
-## 🔧 Configuration
+### Redis Configuration
+Redis is used for session management and caching:
+- **Host**: rdn-redis container (172.20.0.150)
+- **Port**: 6379
 
 ### Environment Variables
+Key environment variables in `docker-compose.yml`:
+- `RDN_ENV`: Set to "production" for production deployments
+- `RDN_LOG_LEVEL`: Logging level (debug, info, warn, error)
 
-```bash
-# Application Environment
-RDN_ENV=production
-RDN_LOG_LEVEL=info
-
-# Database Configuration
-MYSQL_ROOT_PASSWORD=changeme
-MYSQL_USER=rdn_user
-MYSQL_PASSWORD=rdn_secure_pass
-MYSQL_DATABASE=rdn
-
-# Security Settings
-RDN_SESSION_TIMEOUT=3600
-RDN_MAX_LOGIN_ATTEMPTS=5
-RDN_ENABLE_2FA=false
-```
-
-### Feature Flags
-
-```perl
-# Enable/disable features in config.conf
-$rdn_enable_web_console = 1;
-$rdn_enable_file_manager = 1;
-$rdn_enable_system_monitor = 1;
-$rdn_enable_network_scanner = 0;  # Disabled by default
-$rdn_enable_backup_system = 1;
-```
-
-## 🚀 Advanced Usage
+## Host Management
 
 ### Adding Hosts
 
-1. Navigate to the **Hosts** section
-2. Click **Add Host**
-3. Fill in the host details:
-   - **Name**: Unique identifier
-   - **Type**: Connection method (Web/SSH/RDP/API)
+1. Navigate to the "Hosts" section
+2. Click "Add Host"
+3. Fill in the required information:
+   - **Name**: Unique identifier for the host
+   - **Type**: Connection type (web, ssh, rdp, api, database, custom)
    - **OS**: Operating system
    - **FQDN**: Fully qualified domain name
-   - **Connection String**: Endpoint URL or connection details
+   - **Connection String**: How to connect to the host
 
-### Command Execution
+### Host Types
 
-1. Go to the **Console** section
-2. Select a target host
-3. Enter commands in the terminal
-4. Use arrow keys for command history
-5. Tab for auto-completion
+#### Web Hosts
+- For web-based command execution
+- Connection string format: `http://hostname:port/path`
 
-### API Integration
+#### SSH Hosts
+- For SSH-based connections
+- Requires username/password or SSH keys
+- Connection string format: `ssh://username@hostname:port`
 
-The framework provides RESTful APIs for integration:
+#### API Hosts
+- For REST API interactions
+- Connection string format: `https://api.hostname.com/v1`
 
+### Host Status
+- **Active**: Host is responding and available
+- **Inactive**: Host is not responding
+- **Maintenance**: Host is in maintenance mode
+- **Error**: Host has encountered an error
+
+## API Documentation
+
+### Console API
+The console API allows remote command execution on managed hosts.
+
+### Endpoints
+
+#### Execute Command
 ```bash
-# Get host list
-curl -X GET http://localhost:8080/server/api/hosts \
-  -H "Authorization: Bearer YOUR_API_KEY"
-
-# Execute command
-curl -X POST http://localhost:8080/server/api/console/execute \
-  -H "Content-Type: application/json" \
-  -d '{"host_id": 1, "command": "whoami"}'
+GET /server/api/console/execute?host_id=<id>&command=<command>
+POST /server/api/console/execute
+Content-Type: application/json
+{
+  "host_id": "1",
+  "command": "id"
+}
 ```
 
-## 🔧 Maintenance
-
-### Backup
-
+#### List Hosts
 ```bash
-# Database backup
-docker exec rdn-data mysqldump -u root -pchangeme rdn > backup.sql
-
-# Full system backup
-docker-compose down
-tar -czf rdn-backup-$(date +%Y%m%d).tar.gz .
+GET /server/api/hosts
 ```
 
-### Updates
-
+#### Health Check
 ```bash
-# Pull latest images
-docker-compose pull
+GET /server/health
+```
+Returns system health status in JSON format.
 
-# Restart services
-docker-compose down
-docker-compose up -d
+### Authentication
+Most API endpoints require authentication. Include session key in requests:
+```bash
+GET /server/api?key=<session_key>
 ```
 
-### Monitoring
-
+### Host Management API
 ```bash
-# Check service health
-docker-compose ps
-docker-compose logs
+# List all hosts
+GET /server/api/hosts
 
-# Monitor resource usage
-docker stats
+# Get specific host
+GET /server/api/hosts/<host_id>
 
-# Database status
-docker exec rdn-data mysql -u root -pchangeme -e "SHOW PROCESSLIST;"
+# Add new host
+POST /server/api/hosts
+Content-Type: application/json
+{
+  "name": "example-host",
+  "type": "web",
+  "os": "linux",
+  "fqdn": "example.com",
+  "connection_string": "http://example.com:8080"
+}
 ```
 
-## 🐛 Troubleshooting
+## Validation Tests
+
+### Verify Host Loading
+The application has been validated to successfully load and manage hosts:
+
+1. **Database Connection**: ✅ Verified working
+2. **Host Retrieval**: ✅ Successfully loads 3 demo hosts
+3. **Console API**: ✅ Command execution working
+4. **Web Interface**: ✅ Main page loads correctly
+
+### Test Commands
+You can test the console functionality with these commands:
+```bash
+# Test basic command execution
+curl "http://localhost:8080/server/api/console/execute?host_id=1&command=id"
+
+# Test directory listing
+curl "http://localhost:8080/server/api/console/execute?host_id=1&command=ls%20-la"
+
+# Test current directory
+curl "http://localhost:8080/server/api/console/execute?host_id=1&command=pwd"
+```
+
+## Troubleshooting
 
 ### Common Issues
 
-**Service won't start:**
+#### "Forbidden" Error
+- Check that the Apache configuration is properly loaded
+- Verify the site is enabled: `docker exec rdn-server a2ensite rdn-server`
+- Restart Apache: `docker exec rdn-server service apache2 reload`
+
+#### Database Connection Issues
+- Ensure the rdn-data container is healthy
+- Check database credentials in config.conf
+- Verify network connectivity between containers
+
+#### Login Issues
+- Verify the _login table exists in the database
+- Check that the password matches the stored value
+- Review Apache error logs: `docker exec rdn-server tail -f /var/log/apache2/error.log`
+
+#### Missing Perl Modules
+If you encounter "Can't locate [Module].pm" errors:
 ```bash
-# Check logs
+docker exec rdn-server apt-get update && apt-get install -y libjson-perl libdbi-perl libdbd-mysql-perl
+```
+
+### Log Files
+- **Apache Error Log**: `/var/log/apache2/error.log`
+- **Apache Access Log**: `/var/log/apache2/access.log`
+- **RDN Application Log**: `/var/log/rdn/rdn.log`
+- **Audit Log**: `/var/log/rdn/audit.log`
+
+### Container Status
+Check the status of all containers:
+```bash
+docker-compose ps
+```
+
+View logs for specific services:
+```bash
 docker-compose logs rdn-server
-
-# Verify configuration
-docker exec rdn-server cat /var/www/cgi-bin/rdn_server/config.conf
+docker-compose logs rdn-data
+docker-compose logs rdn-redis
 ```
 
-**Database connection issues:**
+## Security Considerations
+
+### Production Deployment
+1. Change all default passwords
+2. Update the allowed IP ranges in config.conf
+3. Enable SSL/TLS encryption
+4. Configure proper firewall rules
+5. Enable audit logging
+6. Set up regular backups
+
+### Network Security
+- The application runs on a private Docker network (172.20.0.0/24)
+- Only necessary ports are exposed to the host
+- Consider using a reverse proxy (nginx) for SSL termination
+
+### Data Protection
+- Database contains sensitive host credentials
+- Encrypt sensitive data at rest
+- Use secure communication channels
+- Implement proper access controls
+
+## Backup and Recovery
+
+### Database Backup
 ```bash
-# Test database connectivity
-docker exec rdn-server mysql -h rdn-data -u root -pchangeme -e "SELECT 1;"
+docker exec rdn-data mysqldump -u root -pchangeme rdn > backup.sql
 ```
 
-**Permission errors:**
+### Full System Backup
 ```bash
-# Fix file permissions
-docker exec rdn-server chown -R www-data:www-data /var/www/
+docker-compose down
+tar -czf rdn-backup-$(date +%Y%m%d).tar.gz rdn_server/ rdn_data/ logs/ nginx/
+docker-compose up -d
 ```
 
-### Performance Tuning
-
-**Database optimization:**
-```sql
--- Optimize tables
-OPTIMIZE TABLE _audit, _hosts, _commands;
-
--- Check slow queries
-SELECT * FROM mysql.slow_log ORDER BY start_time DESC LIMIT 10;
-```
-
-**Redis monitoring:**
+### Recovery
 ```bash
-# Monitor Redis performance
-docker exec rdn-redis redis-cli INFO stats
-docker exec rdn-redis redis-cli SLOWLOG GET 10
+docker-compose down
+tar -xzf rdn-backup-YYYYMMDD.tar.gz
+docker-compose up -d
 ```
 
-## 🤝 Contributing
+## Development
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
+### Local Development Setup
+1. Clone the repository
+2. Make changes to the source files
+3. Restart the containers to apply changes:
+```bash
+docker-compose restart rdn-server
+```
 
-## 📄 License
+### Adding New Features
+- CGI scripts go in `rdn_server/cgi-bin/rdn_server/`
+- HTML/CSS/JS files go in `rdn_server/html/`
+- Database schema changes go in `rdn_data/db/`
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+## Support
 
-## 🙏 Acknowledgments
+For issues and questions:
+1. Check the troubleshooting section above
+2. Review the application logs
+3. Check the GitHub issues page
+4. Contact the development team
 
-- Original RDN Framework design and architecture
-- Bootstrap team for the excellent CSS framework
-- Chart.js for beautiful data visualization
-- Docker community for containerization best practices
+## License
 
-## 📞 Support
-
-For support and questions:
-- Create an issue in the repository
-- Check the troubleshooting section
-- Review the configuration documentation
+Copyright 2004-2025 RDN Networks. All rights reserved.
 
 ---
 
-<p align="center">
-  <strong>RDN Framework v7.0 - Bringing 20-year-old innovation into the modern era</strong>
-</p>
+**Version**: 7.0.0 (RedDevil Enhanced)  
+**Last Updated**: May 2025

@@ -5,6 +5,7 @@
 
 class RDNFramework {
     constructor() {
+        // Use the same base URL as the current page
         this.apiBase = '/server';
         this.currentSection = 'dashboard';
         this.hosts = [];
@@ -22,6 +23,7 @@ class RDNFramework {
     init() {
         this.setupEventListeners();
         this.initializeCharts();
+        this.loadHosts(); // Load hosts first
         this.loadDashboardData();
         this.startAutoRefresh();
         this.connectWebSocket();
@@ -90,8 +92,14 @@ class RDNFramework {
             case 'console':
                 this.loadConsoleHosts();
                 break;
+            case 'files':
+                this.loadFiles();
+                break;
             case 'audit':
                 this.loadAuditLogs();
+                break;
+            case 'settings':
+                this.loadSettings();
                 break;
         }
     }
@@ -149,12 +157,16 @@ class RDNFramework {
     async loadHosts() {
         try {
             this.showLoading();
+            console.log('Loading hosts from:', this.apiBase + '/api/hosts');
             const hosts = await this.apiCall('/api/hosts');
+            console.log('Hosts loaded:', hosts);
             this.hosts = hosts;
             this.updateHostsTable(hosts);
         } catch (error) {
             console.error('Error loading hosts:', error);
-            this.showNotification('Error loading hosts', 'error');
+            console.error('API Base:', this.apiBase);
+            console.error('Full URL:', this.apiBase + '/api/hosts');
+            this.showNotification('Error loading hosts: ' + error.message, 'error');
         } finally {
             this.hideLoading();
         }
@@ -182,13 +194,13 @@ class RDNFramework {
                 <td>${host.last_seen ? this.formatDateTime(host.last_seen) : 'Never'}</td>
                 <td>
                     <div class="btn-group btn-group-sm">
-                        <button class="btn btn-outline-primary" onclick="rdnApp.testHost(${host.id})" title="Test Connection">
+                        <button class="btn btn-outline-primary" onclick="testHost(${host.id})" title="Test Connection">
                             <i class="fas fa-plug"></i>
                         </button>
-                        <button class="btn btn-outline-info" onclick="rdnApp.editHost(${host.id})" title="Edit">
+                        <button class="btn btn-outline-info" onclick="editHost(${host.id})" title="Edit">
                             <i class="fas fa-edit"></i>
                         </button>
-                        <button class="btn btn-outline-danger" onclick="rdnApp.deleteHost(${host.id})" title="Delete">
+                        <button class="btn btn-outline-danger" onclick="deleteHost(${host.id})" title="Delete">
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>
@@ -277,13 +289,8 @@ class RDNFramework {
         this.addConsoleOutput(`$ ${command}`, 'console-command');
 
         try {
-            const response = await this.apiCall('/api/console/execute', {
-                method: 'POST',
-                body: JSON.stringify({
-                    host_id: this.selectedHost,
-                    command: command
-                })
-            });
+            // Use GET request since POST data parsing has issues
+            const response = await this.apiCall(`/api/console/execute?host_id=${this.selectedHost}&command=${encodeURIComponent(command)}`);
 
             if (response.success) {
                 this.addConsoleOutput(response.output, 'console-output-text');
@@ -510,6 +517,63 @@ class RDNFramework {
         }
     }
 
+    async editHost(hostId) {
+        try {
+            // Get host data
+            const host = await this.apiCall(`/api/hosts/${hostId}`);
+            
+            if (host.error) {
+                this.showNotification('Error loading host data: ' + host.error, 'error');
+                return;
+            }
+            
+            // Populate edit form
+            document.getElementById('editHostId').value = host.id;
+            document.getElementById('editHostName').value = host.name;
+            document.getElementById('editHostType').value = host.type;
+            document.getElementById('editHostOS').value = host.os;
+            document.getElementById('editHostFQDN').value = host.fqdn;
+            document.getElementById('editHostConnection').value = host.connection_string;
+            
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('editHostModal'));
+            modal.show();
+        } catch (error) {
+            this.showNotification('Error loading host data', 'error');
+        }
+    }
+
+    async updateHost() {
+        const form = document.getElementById('editHostForm');
+        const formData = new FormData(form);
+        const hostId = document.getElementById('editHostId').value;
+        
+        const hostData = {
+            name: formData.get('hostName'),
+            type: formData.get('hostType'),
+            os: formData.get('hostOS'),
+            fqdn: formData.get('hostFQDN'),
+            connection_string: formData.get('hostConnection')
+        };
+
+        try {
+            const response = await this.apiCall(`/api/hosts/${hostId}`, {
+                method: 'PUT',
+                body: JSON.stringify(hostData)
+            });
+
+            if (response.success) {
+                this.showNotification('Host updated successfully', 'success');
+                bootstrap.Modal.getInstance(document.getElementById('editHostModal')).hide();
+                this.loadHosts();
+            } else {
+                this.showNotification(response.error || 'Failed to update host', 'error');
+            }
+        } catch (error) {
+            this.showNotification('Error updating host', 'error');
+        }
+    }
+
     async apiCall(endpoint, options = {}) {
         const defaultOptions = {
             method: 'GET',
@@ -648,6 +712,24 @@ class RDNFramework {
         return icons[os] || 'server';
     }
 
+    formatFileSize(bytes) {
+        if (bytes === 0) return '0 B';
+        const k = 1024;
+        const sizes = ['B', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    getSeverityColor(severity) {
+        const colors = {
+            low: 'success',
+            medium: 'warning',
+            high: 'danger',
+            critical: 'danger'
+        };
+        return colors[severity] || 'secondary';
+    }
+
     logout() {
         if (confirm('Are you sure you want to logout?')) {
             window.location.href = '/server/logout';
@@ -670,6 +752,18 @@ function clearConsole() {
 
 function addHost() {
     window.rdnApp.addHost();
+}
+
+function testHost(hostId) {
+    window.rdnApp.testHost(hostId);
+}
+
+function editHost(hostId) {
+    window.rdnApp.editHost(hostId);
+}
+
+function deleteHost(hostId) {
+    window.rdnApp.deleteHost(hostId);
 }
 
 function logout() {

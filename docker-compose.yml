@@ -1,15 +1,14 @@
-version: '3.8'
-
 services:
   rdn_server:
     image: blackopsinc/rdnserver:latest
     container_name: rdn-server
-    command: bash -c "sh /var/www/cgi-bin/rdn_server/install.sh; apache2ctl -D FOREGROUND"
+    command: bash -c "sh /var/www/cgi-bin/rdn_server/install.sh; a2dissite 000-default; a2ensite rdn-server; apache2ctl -D FOREGROUND"
     ports:
-      - '127.0.0.1:8080:8080'
+      - '8080:8080'
     volumes:
       - ./rdn_server:/var/www/
       - ./logs:/var/log/rdn
+      - ./rdn-server.conf:/etc/apache2/sites-available/rdn-server.conf
     hostname: rdn_server
     restart: unless-stopped
     environment:

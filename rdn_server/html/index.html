@@ -14,7 +14,7 @@
     <!-- JavaScript Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.4.0/axios.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.min.js"></script>
     <script src="js/rdn_enhanced.js"></script>
 </head>
 <body class="bg-dark text-light">
@@ -331,11 +331,11 @@
                     <form id="addHostForm">
                         <div class="mb-3">
                             <label for="hostName" class="form-label">Host Name</label>
-                            <input type="text" class="form-control bg-secondary text-light" id="hostName" required>
+                            <input type="text" class="form-control bg-secondary text-light" id="hostName" name="hostName" required>
                         </div>
                         <div class="mb-3">
                             <label for="hostType" class="form-label">Type</label>
-                            <select class="form-select bg-secondary text-light" id="hostType" required>
+                            <select class="form-select bg-secondary text-light" id="hostType" name="hostType" required>
                                 <option value="web">Web</option>
                                 <option value="ssh">SSH</option>
                                 <option value="rdp">RDP</option>
@@ -346,7 +346,7 @@
                         </div>
                         <div class="mb-3">
                             <label for="hostOS" class="form-label">Operating System</label>
-                            <select class="form-select bg-secondary text-light" id="hostOS" required>
+                            <select class="form-select bg-secondary text-light" id="hostOS" name="hostOS" required>
                                 <option value="linux">Linux</option>
                                 <option value="windows">Windows</option>
                                 <option value="macos">macOS</option>
@@ -356,17 +356,71 @@
                         </div>
                         <div class="mb-3">
                             <label for="hostFQDN" class="form-label">FQDN</label>
-                            <input type="text" class="form-control bg-secondary text-light" id="hostFQDN" required>
+                            <input type="text" class="form-control bg-secondary text-light" id="hostFQDN" name="hostFQDN" required>
                         </div>
                         <div class="mb-3">
                             <label for="hostConnection" class="form-label">Connection String</label>
-                            <input type="text" class="form-control bg-secondary text-light" id="hostConnection" required>
+                            <input type="text" class="form-control bg-secondary text-light" id="hostConnection" name="hostConnection" required>
                         </div>
                     </form>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="button" class="btn btn-primary" onclick="addHost()">Add Host</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Host Modal -->
+    <div class="modal fade" id="editHostModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content bg-dark">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Host</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editHostForm">
+                        <input type="hidden" id="editHostId">
+                        <div class="mb-3">
+                            <label for="editHostName" class="form-label">Host Name</label>
+                            <input type="text" class="form-control bg-secondary text-light" id="editHostName" name="hostName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editHostType" class="form-label">Type</label>
+                            <select class="form-select bg-secondary text-light" id="editHostType" name="hostType" required>
+                                <option value="web">Web</option>
+                                <option value="ssh">SSH</option>
+                                <option value="rdp">RDP</option>
+                                <option value="api">API</option>
+                                <option value="database">Database</option>
+                                <option value="custom">Custom</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editHostOS" class="form-label">Operating System</label>
+                            <select class="form-select bg-secondary text-light" id="editHostOS" name="hostOS" required>
+                                <option value="linux">Linux</option>
+                                <option value="windows">Windows</option>
+                                <option value="macos">macOS</option>
+                                <option value="freebsd">FreeBSD</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editHostFQDN" class="form-label">FQDN</label>
+                            <input type="text" class="form-control bg-secondary text-light" id="editHostFQDN" name="hostFQDN" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editHostConnection" class="form-label">Connection String</label>
+                            <input type="text" class="form-control bg-secondary text-light" id="editHostConnection" name="hostConnection" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="rdnApp.updateHost()">Update Host</button>
                 </div>
             </div>
         </div>
