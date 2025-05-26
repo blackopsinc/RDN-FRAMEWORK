@@ -1,40 +1,55 @@
 #!/usr/bin/perl
 ################################################
-#      Copyright 2004-2011 RDN Networks        #
+#      Copyright 2004-2025 RDN Networks        #
+#      Enhanced Authentication Module          #
 ################################################
 
 use CGI;
+use CGI::Cookie;
 $rdn = new CGI;
-$user_name = $rdn->param('username');
-$user_pass = $rdn->param('password');
+$user_name = $rdn->param("username");
+$user_pass = $rdn->param("password");
+
 require "/var/www/cgi-bin/rdn_server/config.conf";
-require "/var/www/cgi-bin/rdn_server/rdn_database";
+require "/var/www/cgi-bin/rdn_server/rdn_session";
 
-&rdn_login;
+# Simple authentication - in production, this should check against database
+# For now, using default admin credentials
+my $valid_username = "admin";
+my $valid_password = "admin123";  # Change this default password!
 
-if (($user_name eq 'admin') && ($user_pass eq $user_pass_stored)){
-	#&rdn_set_key("client");
-	&rdn_set_key("global");
-	$key = &rdn_set_key("session");
-	print "Location: $rdn_server$rdn_port/$rdn_bin/rdn_console?target=console&key=" . $key . "\n\n";
-	exit;
-}
-
-else {
-print $rdn->header("text/html");
-print <<ALERT;
-<html>
-<head>
-<link href="$rdn_server$rdn_port/css/$rdn_theme/rdn_output.css" rel="stylesheet" type="text/css">
-<script language="javascript" type="text/javascript">
-function show_alert(){
-window.alert("RDNetworks - Access denied! ( $rdn_hostname )", "Null");
-parent.frames.location.replace ("$rdn_server$rdn_port/");
-}
-</script>
-<body onLoad="show_alert();">
-</body>
-</html>
-ALERT
-exit;
+if (($user_name eq $valid_username) && ($user_pass eq $valid_password)) {
+    # Set session cookie
+    &rdn_setsession();
+    
+    # Redirect to main dashboard
+    print "Location: $rdn_server$rdn_port/$rdn_bin/rdn_auth_check\n\n";
+    exit;
+} else {
+    # Authentication failed
+    print $rdn->header("text/html");
+    print "<!DOCTYPE html>\n";
+    print "<html>\n";
+    print "<head>\n";
+    print "    <title>Access Denied - RDN Framework</title>\n";
+    print "    <meta charset=\"UTF-8\">\n";
+    print "    <style>\n";
+    print "        body { background: linear-gradient(135deg, #1a1e21 0%, #212529 100%); min-height: 100vh; color: white; font-family: Arial, sans-serif; display: flex; align-items: center; justify-content: center; }\n";
+    print "        .error-container { text-align: center; }\n";
+    print "    </style>\n";
+    print "</head>\n";
+    print "<body>\n";
+    print "    <div class=\"error-container\">\n";
+    print "        <h1 style=\"color: #dc3545;\">Access Denied</h1>\n";
+    print "        <p>Invalid username or password.</p>\n";
+    print "        <a href=\"$rdn_server$rdn_port/$rdn_bin/login.html\" style=\"color: #007bff;\">Try Again</a>\n";
+    print "    </div>\n";
+    print "    <script>\n";
+    print "        setTimeout(function() {\n";
+    print "            window.location.href = \"$rdn_server$rdn_port/$rdn_bin/login.html\";\n";
+    print "        }, 3000);\n";
+    print "    </script>\n";
+    print "</body>\n";
+    print "</html>\n";
+    exit;
 }

@@ -1,0 +1,32 @@
+#!/usr/bin/perl
+################################################
+#      Copyright 2004-2025 RDN Networks        #
+#      Authentication Check Module             #
+################################################
+
+use CGI;
+use CGI::Cookie;
+$rdn = new CGI;
+
+require "/var/www/cgi-bin/rdn_server/config.conf";
+require "/var/www/cgi-bin/rdn_server/rdn_session";
+
+# Check if user has valid session
+my $session_status = &rdn_getsession();
+
+if ($session_status eq "timeout" || $session_status ne "alive") {
+    # No valid session, redirect to login
+    print "Location: $rdn_server$rdn_port/$rdn_bin/login.html\n\n";
+    exit;
+} else {
+    # Valid session, serve the main dashboard
+    print $rdn->header("text/html");
+    
+    # Read and serve the dashboard.html file
+    open(my $fh, '<', '/var/www/html/dashboard.html') or die "Cannot open dashboard.html: $!";
+    while (my $line = <$fh>) {
+        print $line;
+    }
+    close($fh);
+    exit;
+}

@@ -5,8 +5,8 @@
 
 class RDNFramework {
     constructor() {
-        // Use the same base URL as the current page
-        this.apiBase = '/server';
+        // Use the correct API endpoint
+        this.apiBase = '/server/api';
         this.currentSection = 'dashboard';
         this.hosts = [];
         this.commands = [];
@@ -51,6 +51,11 @@ class RDNFramework {
         if (hostSelect) {
             hostSelect.addEventListener('change', (e) => {
                 this.selectedHost = e.target.value;
+                const selectedHost = this.hosts.find(h => h.id.toString() === e.target.value) || 
+                                   (e.target.value === 'localhost-fallback' ? { name: 'localhost', fqdn: '127.0.0.1' } : null);
+                if (selectedHost) {
+                    this.updateConsolePrompt(selectedHost);
+                }
             });
         }
 
@@ -91,6 +96,7 @@ class RDNFramework {
                 break;
             case 'console':
                 this.loadConsoleHosts();
+                this.focusConsoleInput();
                 break;
             case 'files':
                 this.loadFiles();
@@ -109,11 +115,11 @@ class RDNFramework {
             this.showLoading();
             
             // Load dashboard statistics
-            const stats = await this.apiCall('/api/dashboard/stats');
+            const stats = await this.apiCall('/dashboard/stats');
             this.updateDashboardStats(stats);
             
             // Load recent activity
-            const activity = await this.apiCall('/api/dashboard/activity');
+            const activity = await this.apiCall('/dashboard/activity');
             this.updateRecentActivity(activity);
             
             // Update charts
@@ -157,15 +163,15 @@ class RDNFramework {
     async loadHosts() {
         try {
             this.showLoading();
-            console.log('Loading hosts from:', this.apiBase + '/api/hosts');
-            const hosts = await this.apiCall('/api/hosts');
+            console.log('Loading hosts from:', this.apiBase + '/hosts');
+            const hosts = await this.apiCall('/hosts');
             console.log('Hosts loaded:', hosts);
             this.hosts = hosts;
             this.updateHostsTable(hosts);
         } catch (error) {
             console.error('Error loading hosts:', error);
             console.error('API Base:', this.apiBase);
-            console.error('Full URL:', this.apiBase + '/api/hosts');
+            console.error('Full URL:', this.apiBase + '/hosts');
             this.showNotification('Error loading hosts: ' + error.message, 'error');
         } finally {
             this.hideLoading();
@@ -213,14 +219,85 @@ class RDNFramework {
         const select = document.getElementById('console-host-select');
         if (!select) return;
 
+        // Keep the existing selection if any
+        const currentSelection = select.value;
+        
         select.innerHTML = '<option value="">Select a host...</option>';
         
-        this.hosts.filter(host => host.status === 'active').forEach(host => {
+        // Find localhost in database hosts first
+        let localhostHost = this.hosts.find(host => 
+            host.name.toLowerCase() === 'localhost' || 
+            host.fqdn.toLowerCase() === 'localhost' ||
+            host.fqdn === '127.0.0.1'
+        );
+        
+        let defaultSelected = false;
+        
+        // Add all hosts including localhost from database
+        this.hosts.filter(host => host.status === 'active' || host.status === 'online').forEach(host => {
             const option = document.createElement('option');
             option.value = host.id;
-            option.textContent = `${host.name} (${host.fqdn})`;
+            
+            // Special formatting for localhost
+            if (host.name.toLowerCase() === 'localhost' || host.fqdn.toLowerCase() === 'localhost' || host.fqdn === '127.0.0.1') {
+                option.textContent = `localhost (${host.fqdn})`;
+                // Auto-select localhost if no current selection
+                if (!currentSelection && !defaultSelected) {
+                    option.selected = true;
+                    this.selectedHost = host.id;
+                    defaultSelected = true;
+                    this.updateConsolePrompt(host);
+                }
+            } else {
+                option.textContent = `${host.name} (${host.fqdn})`;
+            }
+            
+            if (currentSelection === host.id.toString()) {
+                option.selected = true;
+                this.selectedHost = host.id;
+                this.updateConsolePrompt(host);
+            }
+            
             select.appendChild(option);
         });
+        
+        // If no localhost found in database, add a fallback localhost option
+        if (!localhostHost) {
+            const localhostOption = document.createElement('option');
+            localhostOption.value = 'localhost-fallback';
+            localhostOption.textContent = 'localhost (127.0.0.1)';
+            if (!currentSelection && !defaultSelected) {
+                localhostOption.selected = true;
+                this.selectedHost = 'localhost-fallback';
+                this.updateConsolePrompt({ name: 'localhost', fqdn: '127.0.0.1' });
+            }
+            select.appendChild(localhostOption);
+        }
+    }
+
+    updateConsolePrompt(host) {
+        const promptElement = document.getElementById('console-prompt');
+        if (promptElement && host) {
+            // Keep the simple prompt style consistent with the cleaned up design
+            promptElement.textContent = '$';
+        }
+    }
+
+    focusConsoleInput() {
+        // Focus the console input with a slight delay to ensure the section is visible
+        setTimeout(() => {
+            const consoleInput = document.getElementById('console-input');
+            if (consoleInput) {
+                consoleInput.focus();
+                // Add welcome message if console is empty
+                const consoleOutput = document.getElementById('console-output');
+                if (consoleOutput && consoleOutput.innerHTML.trim() === '') {
+                    this.addConsoleOutput('Welcome to RDN Framework Console', 'console-success');
+                    this.addConsoleOutput('Type commands and use ↑/↓ arrows to navigate history', 'console-output-text');
+                    this.addConsoleOutput('', ''); // Empty line
+                }
+            }
+        }, 100);
     }
 
     handleConsoleKeydown(e) {
@@ -285,12 +362,16 @@ class RDNFramework {
         // Clear input
         input.value = '';
 
-        // Add command to output
-        this.addConsoleOutput(`$ ${command}`, 'console-command');
+        // Get current prompt for display
+        const promptElement = document.getElementById('console-prompt');
+        const promptText = promptElement ? promptElement.textContent.replace(/\n/g, ' ') : '$ ';
+
+        // Add command to output with simple prompt
+        this.addConsoleOutput(`${promptText} ${command}`, 'console-command');
 
         try {
             // Use GET request since POST data parsing has issues
-            const response = await this.apiCall(`/api/console/execute?host_id=${this.selectedHost}&command=${encodeURIComponent(command)}`);
+            const response = await this.apiCall(`/console/execute?host_id=${this.selectedHost}&command=${encodeURIComponent(command)}`);
 
             if (response.success) {
                 this.addConsoleOutput(response.output, 'console-output-text');
@@ -461,7 +542,7 @@ class RDNFramework {
         };
 
         try {
-            const response = await this.apiCall('/api/hosts', {
+            const response = await this.apiCall('/hosts', {
                 method: 'POST',
                 body: JSON.stringify(hostData)
             });
@@ -482,7 +563,7 @@ class RDNFramework {
     async testHost(hostId) {
         try {
             this.showLoading();
-            const response = await this.apiCall(`/api/hosts/${hostId}/test`, {
+            const response = await this.apiCall(`/hosts/${hostId}/test`, {
                 method: 'POST'
             });
 
@@ -502,7 +583,7 @@ class RDNFramework {
         if (!confirm('Are you sure you want to delete this host?')) return;
 
         try {
-            const response = await this.apiCall(`/api/hosts/${hostId}`, {
+            const response = await this.apiCall(`/hosts/${hostId}`, {
                 method: 'DELETE'
             });
 
@@ -520,7 +601,7 @@ class RDNFramework {
     async editHost(hostId) {
         try {
             // Get host data
-            const host = await this.apiCall(`/api/hosts/${hostId}`);
+            const host = await this.apiCall(`/hosts/${hostId}`);
             
             if (host.error) {
                 this.showNotification('Error loading host data: ' + host.error, 'error');
@@ -557,7 +638,7 @@ class RDNFramework {
         };
 
         try {
-            const response = await this.apiCall(`/api/hosts/${hostId}`, {
+            const response = await this.apiCall(`/hosts/${hostId}`, {
                 method: 'PUT',
                 body: JSON.stringify(hostData)
             });
@@ -732,7 +813,7 @@ class RDNFramework {
 
     logout() {
         if (confirm('Are you sure you want to logout?')) {
-            window.location.href = '/server/logout';
+            window.location.href = '/server/cgi-bin/rdn_server/rdn_logout';
         }
     }
 }
