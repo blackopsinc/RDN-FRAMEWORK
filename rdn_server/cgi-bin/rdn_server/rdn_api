@@ -1,28 +1,29 @@
 #!/usr/bin/perl
-################################################
-#      RDN Framework API Handler v7.0          #
-#      Copyright 2004-2025 RDN Networks        #
-################################################
 
+use strict;
+use warnings;
 use CGI;
 use JSON;
 use DBI;
-require "/var/www/cgi-bin/rdn_server/config.conf";
-require "/var/www/cgi-bin/rdn_server/rdn_database";
 
-$rdn = new CGI;
-$json = JSON->new->allow_nonref;
+# Database configuration - direct values to avoid config issues
+my $rdn_db_schema = "rdn";
+my $rdn_db_host = "172.20.0.200";
+my $rdn_db_port = "3306";
+my $rdn_db_user = "root";
+my $rdn_db_pass = "changeme";
 
-# Set JSON content type
+my $json = JSON->new->allow_nonref;
+
+# Set JSON content type and CORS headers
 print "Content-Type: application/json\n";
 print "Access-Control-Allow-Origin: *\n";
 print "Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS\n";
 print "Access-Control-Allow-Headers: Content-Type, X-Requested-With\n\n";
 
 # Get request method and path
-$method = $ENV{'REQUEST_METHOD'} || 'GET';
-$path_info = $ENV{'PATH_INFO'} || '';
-$query_string = $ENV{'QUERY_STRING'} || '';
+my $method = $ENV{'REQUEST_METHOD'} || 'GET';
+my $path_info = $ENV{'PATH_INFO'} || '';
 
 # Handle OPTIONS request for CORS
 if ($method eq 'OPTIONS') {
@@ -30,12 +31,12 @@ if ($method eq 'OPTIONS') {
 }
 
 # Parse path
-@path_parts = split('/', $path_info);
+my @path_parts = split('/', $path_info);
 shift @path_parts; # Remove empty first element
 
-$endpoint = $path_parts[0] || '';
-$resource = $path_parts[1] || '';
-$action = $path_parts[2] || '';
+my $endpoint = $path_parts[0] || '';
+my $resource = $path_parts[1] || '';
+my $action = $path_parts[2] || '';
 
 # Route requests
 if ($endpoint eq 'dashboard') {
@@ -44,30 +45,22 @@ if ($endpoint eq 'dashboard') {
     handle_hosts($resource, $action);
 } elsif ($endpoint eq 'console') {
     handle_console($resource);
-} elsif ($endpoint eq 'files') {
-    handle_files($resource, $action);
-} elsif ($endpoint eq 'audit') {
-    handle_audit($resource);
-} elsif ($endpoint eq 'settings') {
-    handle_settings($resource);
 } else {
     send_error("Unknown endpoint: $endpoint", 404);
 }
 
 sub handle_dashboard {
     my $resource = shift;
-    
+
     if ($resource eq 'stats') {
-        # Get dashboard statistics
         my $stats = {
             activeHosts => get_active_hosts_count(),
             commandsToday => get_commands_today_count(),
-            pendingTasks => get_pending_tasks_count(),
-            failedCommands => get_failed_commands_count()
+            pendingTasks => 0,
+            failedCommands => 0
         };
         send_json($stats);
     } elsif ($resource eq 'activity') {
-        # Get recent activity
         my $activity = get_recent_activity();
         send_json($activity);
     } else {
@@ -77,14 +70,14 @@ sub handle_dashboard {
 
 sub handle_hosts {
     my ($resource, $action) = @_;
-    
+
     if ($method eq 'GET' && !$resource) {
         # Get all hosts
         my $hosts = get_all_hosts();
         send_json($hosts);
     } elsif ($method eq 'POST' && !$resource) {
         # Create new host
-        my $input = get_json_input();
+        my $input = get_post_data();
         my $result = create_host($input);
         send_json($result);
     } elsif ($method eq 'POST' && $action eq 'test') {
@@ -93,7 +86,7 @@ sub handle_hosts {
         send_json($result);
     } elsif ($method eq 'PUT' && $resource) {
         # Update host
-        my $input = get_json_input();
+        my $input = get_post_data();
         my $result = update_host($resource, $input);
         send_json($result);
     } elsif ($method eq 'GET' && $resource) {
@@ -111,25 +104,65 @@ sub handle_hosts {
 
 sub handle_console {
     my $resource = shift;
-    
+
     if ($resource eq 'execute') {
         my $input;
-        
+
         if ($method eq 'POST') {
-            $input = get_json_input();
+            $input = get_post_data();
         } else {
-            # Also support GET with query parameters for testing
+            # Support GET with query parameters
+            my $cgi = CGI->new;
             $input = {
-                host_id => $rdn->param('host_id') || '',
-                command => $rdn->param('command') || ''
+                host_id => $cgi->param('host_id') || '',
+                command => $cgi->param('command') || ''
             };
         }
-        
+
         my $result = execute_console_command($input);
         send_json($result);
     } else {
         send_error("Invalid console request", 400);
     }
+}
+
+sub get_post_data {
+    my %data = ();
+    
+    if ($method eq 'POST' || $method eq 'PUT') {
+        my $content_length = $ENV{'CONTENT_LENGTH'} || 0;
+        
+        if ($content_length > 0) {
+            my $raw_data = '';
+            read(STDIN, $raw_data, $content_length);
+            
+            # Try to parse as JSON first
+            if ($raw_data && $raw_data =~ /^\s*\{/) {
+                eval {
+                    my $parsed = $json->decode($raw_data);
+                    if (ref($parsed) eq 'HASH') {
+                        %data = %$parsed;
+                    }
+                };
+                if ($@) {
+                    # JSON parsing failed, return debug info
+                    return {
+                        _error => "JSON parsing failed: $@",
+                        _raw_data => $raw_data,
+                        _content_length => $content_length
+                    };
+                }
+            } else {
+                # Try as form data
+                my $cgi = CGI->new($raw_data);
+                foreach my $param ($cgi->param()) {
+                    $data{$param} = $cgi->param($param);
+                }
+            }
+        }
+    }
+    
+    return \%data;
 }
 
 sub get_active_hosts_count {
@@ -162,62 +195,34 @@ sub get_commands_today_count {
     return $count || 0;
 }
 
-sub get_pending_tasks_count {
-    my $count = 0;
-    eval {
-        my $dbh = DBI->connect("DBI:mysql:$rdn_db_schema:$rdn_db_host:$rdn_db_port", $rdn_db_user, $rdn_db_pass);
-        if ($dbh) {
-            my $sth = $dbh->prepare("SELECT COUNT(*) FROM _commands WHERE status = 'pending'");
-            $sth->execute();
-            ($count) = $sth->fetchrow_array();
-            $sth->finish();
-            $dbh->disconnect();
-        }
-    };
-    return $count || 0;
-}
-
-sub get_failed_commands_count {
-    my $count = 0;
-    eval {
-        my $dbh = DBI->connect("DBI:mysql:$rdn_db_schema:$rdn_db_host:$rdn_db_port", $rdn_db_user, $rdn_db_pass);
-        if ($dbh) {
-            my $sth = $dbh->prepare("SELECT COUNT(*) FROM _commands WHERE status = 'failed' AND DATE(created_at) = CURDATE()");
-            $sth->execute();
-            ($count) = $sth->fetchrow_array();
-            $sth->finish();
-            $dbh->disconnect();
-        }
-    };
-    return $count || 0;
-}
-
 sub get_recent_activity {
     my @activity = ();
     eval {
         my $dbh = DBI->connect("DBI:mysql:$rdn_db_schema:$rdn_db_host:$rdn_db_port", $rdn_db_user, $rdn_db_pass);
-        my $sth = $dbh->prepare("
-            SELECT c.created_at, h.name, c.command, c.status, u.username 
-            FROM _commands c 
-            LEFT JOIN _hosts h ON c.host_id = h.id 
-            LEFT JOIN _users u ON c.user_id = u.id 
-            ORDER BY c.created_at DESC 
-            LIMIT 10
-        ");
-        $sth->execute();
-        
-        while (my ($timestamp, $host, $command, $status, $user) = $sth->fetchrow_array()) {
-            push @activity, {
-                timestamp => $timestamp,
-                host => $host || 'Unknown',
-                command => $command || '',
-                status => $status || 'unknown',
-                user => $user || 'Unknown'
-            };
+        if ($dbh) {
+            my $sth = $dbh->prepare("
+                SELECT c.created_at, h.name, c.command, c.status, u.username
+                FROM _commands c
+                LEFT JOIN _hosts h ON c.host_id = h.id
+                LEFT JOIN _users u ON c.user_id = u.id
+                ORDER BY c.created_at DESC
+                LIMIT 10
+            ");
+            $sth->execute();
+
+            while (my ($timestamp, $host, $command, $status, $user) = $sth->fetchrow_array()) {
+                push @activity, {
+                    timestamp => $timestamp,
+                    host => $host || 'Unknown',
+                    command => $command || '',
+                    status => $status || 'unknown',
+                    user => $user || 'Unknown'
+                };
+            }
+
+            $sth->finish();
+            $dbh->disconnect();
         }
-        
-        $sth->finish();
-        $dbh->disconnect();
     };
     return \@activity;
 }
@@ -226,165 +231,227 @@ sub get_all_hosts {
     my @hosts = ();
     eval {
         my $dbh = DBI->connect("DBI:mysql:$rdn_db_schema:$rdn_db_host:$rdn_db_port", $rdn_db_user, $rdn_db_pass);
-        my $sth = $dbh->prepare("SELECT id, name, type, os, fqdn, status, last_seen FROM _hosts ORDER BY name");
-        $sth->execute();
-        
-        while (my ($id, $name, $type, $os, $fqdn, $status, $last_seen) = $sth->fetchrow_array()) {
-            push @hosts, {
-                id => $id,
-                name => $name,
-                type => $type,
-                os => $os,
-                fqdn => $fqdn,
-                status => $status,
-                last_seen => $last_seen
-            };
+        if ($dbh) {
+            my $sth = $dbh->prepare("SELECT id, name, type, os, fqdn, status, last_seen FROM _hosts ORDER BY name");
+            $sth->execute();
+
+            while (my ($id, $name, $type, $os, $fqdn, $status, $last_seen) = $sth->fetchrow_array()) {
+                push @hosts, {
+                    id => $id,
+                    name => $name,
+                    type => $type,
+                    os => $os,
+                    fqdn => $fqdn,
+                    status => $status,
+                    last_seen => $last_seen
+                };
+            }
+
+            $sth->finish();
+            $dbh->disconnect();
         }
-        
-        $sth->finish();
-        $dbh->disconnect();
     };
     return \@hosts;
 }
 
 sub create_host {
     my $input = shift;
-    
+
+    # Check if we have the required fields
+    if (!$input->{name} || !$input->{type} || !$input->{os} || !$input->{fqdn}) {
+        return { 
+            success => 0, 
+            error => "Missing required fields: name, type, os, fqdn",
+            received => $input
+        };
+    }
+
+    my $error_msg = '';
     eval {
         my $dbh = DBI->connect("DBI:mysql:$rdn_db_schema:$rdn_db_host:$rdn_db_port", $rdn_db_user, $rdn_db_pass);
+        if (!$dbh) {
+            die "Database connection failed: " . DBI->errstr;
+        }
+
         my $sth = $dbh->prepare("
-            INSERT INTO _hosts (name, type, os, fqdn, connection_string, status) 
+            INSERT INTO _hosts (name, type, os, fqdn, connection_string, status)
             VALUES (?, ?, ?, ?, ?, 'active')
         ");
-        $sth->execute($input->{name}, $input->{type}, $input->{os}, $input->{fqdn}, $input->{connection_string});
+        
+        my $result = $sth->execute(
+            $input->{name}, 
+            $input->{type}, 
+            $input->{os}, 
+            $input->{fqdn}, 
+            $input->{connection_string} || ''
+        );
+        
+        if (!$result) {
+            die "Insert failed: " . $sth->errstr;
+        }
+        
         $sth->finish();
         $dbh->disconnect();
-        
-        return { success => 1, message => "Host created successfully" };
     };
-    
-    return { success => 0, error => "Failed to create host: $@" };
+
+    if ($@) {
+        $error_msg = $@;
+        # Handle duplicate entry error specifically
+        if ($error_msg =~ /Duplicate entry.*for key/) {
+            return { success => 0, error => "Host name already exists. Please choose a different name." };
+        }
+        return { success => 0, error => "Failed to create host: $error_msg" };
+    }
+
+    return { success => 1, message => "Host created successfully" };
 }
 
 sub test_host {
     my $host_id = shift;
-    
-    # Simple test - just check if host exists and update last_seen
+
     eval {
         my $dbh = DBI->connect("DBI:mysql:$rdn_db_schema:$rdn_db_host:$rdn_db_port", $rdn_db_user, $rdn_db_pass);
-        my $sth = $dbh->prepare("UPDATE _hosts SET last_seen = NOW() WHERE id = ?");
-        $sth->execute($host_id);
-        $sth->finish();
-        $dbh->disconnect();
-        
-        return { success => 1, message => "Host test successful" };
+        if ($dbh) {
+            my $sth = $dbh->prepare("UPDATE _hosts SET last_seen = NOW() WHERE id = ?");
+            $sth->execute($host_id);
+            $sth->finish();
+            $dbh->disconnect();
+
+            return { success => 1, message => "Host test successful" };
+        }
     };
-    
+
     return { success => 0, error => "Host test failed: $@" };
 }
 
 sub get_host {
     my $host_id = shift;
-    
+
     eval {
         my $dbh = DBI->connect("DBI:mysql:$rdn_db_schema:$rdn_db_host:$rdn_db_port", $rdn_db_user, $rdn_db_pass);
-        my $sth = $dbh->prepare("SELECT id, name, type, os, fqdn, connection_string, status, last_seen FROM _hosts WHERE id = ?");
-        $sth->execute($host_id);
-        
-        my ($id, $name, $type, $os, $fqdn, $connection_string, $status, $last_seen) = $sth->fetchrow_array();
-        $sth->finish();
-        $dbh->disconnect();
-        
-        if ($id) {
-            return {
-                id => $id,
-                name => $name,
-                type => $type,
-                os => $os,
-                fqdn => $fqdn,
-                connection_string => $connection_string,
-                status => $status,
-                last_seen => $last_seen
-            };
+        if ($dbh) {
+            my $sth = $dbh->prepare("SELECT id, name, type, os, fqdn, connection_string, status, last_seen FROM _hosts WHERE id = ?");
+            $sth->execute($host_id);
+
+            my ($id, $name, $type, $os, $fqdn, $connection_string, $status, $last_seen) = $sth->fetchrow_array();
+            $sth->finish();
+            $dbh->disconnect();
+
+            if ($id) {
+                return {
+                    id => $id,
+                    name => $name,
+                    type => $type,
+                    os => $os,
+                    fqdn => $fqdn,
+                    connection_string => $connection_string,
+                    status => $status,
+                    last_seen => $last_seen
+                };
+            }
         }
     };
-    
+
     return { error => "Host not found" };
 }
 
 sub update_host {
     my ($host_id, $input) = @_;
-    
+
+    # Check if we have the required fields
+    if (!$input->{name} || !$input->{type} || !$input->{os} || !$input->{fqdn}) {
+        return { 
+            success => 0, 
+            error => "Missing required fields: name, type, os, fqdn" 
+        };
+    }
+
     eval {
         my $dbh = DBI->connect("DBI:mysql:$rdn_db_schema:$rdn_db_host:$rdn_db_port", $rdn_db_user, $rdn_db_pass);
-        my $sth = $dbh->prepare("
-            UPDATE _hosts 
-            SET name = ?, type = ?, os = ?, fqdn = ?, connection_string = ?, updated_at = NOW()
-            WHERE id = ?
-        ");
-        $sth->execute($input->{name}, $input->{type}, $input->{os}, $input->{fqdn}, $input->{connection_string}, $host_id);
-        $sth->finish();
-        $dbh->disconnect();
-        
-        return { success => 1, message => "Host updated successfully" };
+        if ($dbh) {
+            my $sth = $dbh->prepare("
+                UPDATE _hosts
+                SET name = ?, type = ?, os = ?, fqdn = ?, connection_string = ?, updated_at = NOW()
+                WHERE id = ?
+            ");
+            $sth->execute(
+                $input->{name}, 
+                $input->{type}, 
+                $input->{os}, 
+                $input->{fqdn}, 
+                $input->{connection_string} || '', 
+                $host_id
+            );
+            $sth->finish();
+            $dbh->disconnect();
+
+            return { success => 1, message => "Host updated successfully" };
+        }
     };
-    
+
     return { success => 0, error => "Failed to update host: $@" };
 }
 
 sub delete_host {
     my $host_id = shift;
-    
+
+    my $error_msg = '';
     eval {
         my $dbh = DBI->connect("DBI:mysql:$rdn_db_schema:$rdn_db_host:$rdn_db_port", $rdn_db_user, $rdn_db_pass);
+        if (!$dbh) {
+            die "Database connection failed: " . DBI->errstr;
+        }
+
         my $sth = $dbh->prepare("DELETE FROM _hosts WHERE id = ?");
-        $sth->execute($host_id);
+        my $result = $sth->execute($host_id);
+        
+        if (!$result) {
+            die "Delete failed: " . $sth->errstr;
+        }
+        
         $sth->finish();
         $dbh->disconnect();
-        
-        return { success => 1, message => "Host deleted successfully" };
     };
-    
-    return { success => 0, error => "Failed to delete host: $@" };
+
+    if ($@) {
+        $error_msg = $@;
+        return { success => 0, error => "Failed to delete host: $error_msg" };
+    }
+
+    return { success => 1, message => "Host deleted successfully" };
 }
 
 sub execute_console_command {
     my $input = shift;
-    
+
     my $command = $input->{command} || '';
     my $host_id = $input->{host_id} || '';
-    
-    # Debug: log what we received
-    my $debug_info = "Input received: " . ($json->encode($input) || 'empty');
-    
+
     if (!$command || !$host_id) {
         return {
             success => 0,
-            error => "Missing command or host_id. Debug: $debug_info"
+            error => "Missing command or host_id"
         };
     }
-    
-    # Get host information from database
+
+    # Get host information
     my $host_info = get_host_info($host_id);
-    if (!$host_info) {
+    if (!$host_info || $host_info->{error}) {
         return {
             success => 0,
-            error => "Host not found. Debug: host_id=$host_id, db_host=$rdn_db_host, db_schema=$rdn_db_schema, db_user=$rdn_db_user"
+            error => "Host not found"
         };
     }
-    
-    # Execute command based on host type
+
+    # Execute command
     my $output = '';
     eval {
-        if ($host_info->{type} eq 'web' && $host_info->{fqdn} eq 'localhost') {
+        if ($host_info->{fqdn} eq 'localhost') {
             # Execute locally for localhost
             $output = `$command 2>&1`;
         } else {
-            # For remote hosts, we'd use SSH or other connection methods
-            # For now, simulate command execution
+            # For remote hosts, simulate execution
             $output = "Command '$command' executed on " . $host_info->{name} . " (" . $host_info->{fqdn} . ")\n";
-            $output .= "Host type: " . $host_info->{type} . "\n";
-            $output .= "OS: " . $host_info->{os} . "\n";
             
             # Add some realistic output based on common commands
             if ($command eq 'id') {
@@ -404,17 +471,17 @@ sub execute_console_command {
             }
         }
     };
-    
+
     if ($@) {
         return {
             success => 0,
             error => "Command execution failed: $@"
         };
     }
-    
+
     # Log command execution
     log_command_execution($host_id, $command, $output);
-    
+
     return {
         success => 1,
         output => $output || "Command completed with no output"
@@ -423,19 +490,19 @@ sub execute_console_command {
 
 sub get_host_info {
     my $host_id = shift;
-    
+
     my $dbh = DBI->connect("DBI:mysql:$rdn_db_schema:$rdn_db_host:$rdn_db_port", $rdn_db_user, $rdn_db_pass);
     if (!$dbh) {
-        return { _error => "Database connection failed: $DBI::errstr", _host_id => $host_id };
+        return { error => "Database connection failed" };
     }
-    
+
     my $sth = $dbh->prepare("SELECT id, name, type, os, fqdn, status FROM _hosts WHERE id = ?");
     $sth->execute($host_id);
-    
+
     my ($id, $name, $type, $os, $fqdn, $status) = $sth->fetchrow_array();
     $sth->finish();
     $dbh->disconnect();
-    
+
     if ($id) {
         return {
             id => $id,
@@ -446,244 +513,27 @@ sub get_host_info {
             status => $status
         };
     }
-    
-    return { _error => "No host found with id $host_id", _host_id => $host_id };
+
+    return { error => "Host not found" };
 }
 
 sub log_command_execution {
     my ($host_id, $command, $output) = @_;
-    
+
     eval {
         my $dbh = DBI->connect("DBI:mysql:$rdn_db_schema:$rdn_db_host:$rdn_db_port", $rdn_db_user, $rdn_db_pass);
-        
-        # Generate a unique command ID
-        my $command_id = 'cmd_' . time() . '_' . int(rand(1000));
-        
-        my $sth = $dbh->prepare("
-            INSERT INTO _commands (command_id, host_id, command, output, status, user_id, created_at) 
-            VALUES (?, ?, ?, ?, 'completed', 1, NOW())
-        ");
-        $sth->execute($command_id, $host_id, $command, $output);
-        $sth->finish();
-        $dbh->disconnect();
-    };
-    if ($@) {
-        # Log error but don't fail the main operation
-        warn "Failed to log command execution: $@";
-    }
-}
+        if ($dbh) {
+            my $command_id = 'cmd_' . time() . '_' . int(rand(1000));
 
-sub get_json_input {
-    my $input = '';
-    
-    # Get content length
-    my $content_length = $ENV{'CONTENT_LENGTH'} || 0;
-    
-    if ($content_length > 0) {
-        # Read POST data directly
-        read(STDIN, $input, $content_length);
-    }
-    
-    if ($input) {
-        eval {
-            my $decoded = $json->decode($input);
-            return $decoded;
-        };
-        if ($@) {
-            # If JSON decode fails, try to fix common issues
-            $input =~ s/\\"/"/g;  # Remove escaped quotes
-            $input =~ s/\\\\/\\/g;  # Remove double escaping
-            
-            eval {
-                my $decoded = $json->decode($input);
-                return $decoded;
-            };
-            
-            if ($@) {
-                # Still failed, return debug info
-                return { 
-                    _debug_raw_input => $input, 
-                    _decode_error => "$@",
-                    _content_length => $content_length 
-                };
-            }
-        }
-    }
-    
-    return { 
-        _debug_no_input => 1, 
-        _content_length => $content_length,
-        _env_method => $ENV{'REQUEST_METHOD'} || 'unknown',
-        _input_received => $input
-    };
-}
-
-sub send_json {
-    my $data = shift;
-    print $json->encode($data);
-}
-
-sub handle_files {
-    my ($resource, $action) = @_;
-    
-    if ($method eq 'GET' && !$resource) {
-        # List files in default directory
-        my $files = get_file_list('/var/www/html');
-        send_json($files);
-    } elsif ($method eq 'GET' && $resource eq 'list') {
-        # List files in specified directory
-        my $path = $rdn->param('path') || '/var/www/html';
-        my $files = get_file_list($path);
-        send_json($files);
-    } else {
-        send_error("Invalid files request", 400);
-    }
-}
-
-sub handle_audit {
-    my $resource = shift;
-    
-    if ($method eq 'GET' && !$resource) {
-        # Get audit logs
-        my $logs = get_audit_logs();
-        send_json($logs);
-    } else {
-        send_error("Invalid audit request", 400);
-    }
-}
-
-sub handle_settings {
-    my $resource = shift;
-    
-    if ($method eq 'GET' && !$resource) {
-        # Get all settings
-        my $settings = get_system_settings();
-        send_json($settings);
-    } elsif ($method eq 'POST' && !$resource) {
-        # Update settings
-        my $input = get_json_input();
-        my $result = update_system_settings($input);
-        send_json($result);
-    } else {
-        send_error("Invalid settings request", 400);
-    }
-}
-
-sub get_file_list {
-    my $path = shift;
-    my @files = ();
-    
-    # Security check - only allow certain directories
-    unless ($path =~ /^\/var\/www/ || $path =~ /^\/tmp/ || $path =~ /^\/home/) {
-        return { error => "Access denied to path: $path" };
-    }
-    
-    eval {
-        opendir(my $dh, $path) or die "Cannot open directory $path: $!";
-        while (my $file = readdir($dh)) {
-            next if $file =~ /^\.\.?$/; # Skip . and ..
-            
-            my $full_path = "$path/$file";
-            my @stat = stat($full_path);
-            
-            push @files, {
-                name => $file,
-                path => $full_path,
-                type => (-d $full_path) ? 'directory' : 'file',
-                size => $stat[7] || 0,
-                modified => $stat[9] || 0,
-                permissions => sprintf("%04o", $stat[2] & 07777)
-            };
-        }
-        closedir($dh);
-    };
-    
-    if ($@) {
-        return { error => "Failed to list files: $@" };
-    }
-    
-    return \@files;
-}
-
-sub get_audit_logs {
-    my @logs = ();
-    eval {
-        my $dbh = DBI->connect("DBI:mysql:$rdn_db_schema:$rdn_db_host:$rdn_db_port", $rdn_db_user, $rdn_db_pass);
-        my $sth = $dbh->prepare("
-            SELECT timestamp, event_type, severity, client_ip, user_id, host_id, command, response_code
-            FROM _audit 
-            ORDER BY timestamp DESC 
-            LIMIT 100
-        ");
-        $sth->execute();
-        
-        while (my ($timestamp, $event_type, $severity, $client_ip, $user_id, $host_id, $command, $response_code) = $sth->fetchrow_array()) {
-            push @logs, {
-                timestamp => $timestamp,
-                event_type => $event_type,
-                severity => $severity,
-                client_ip => $client_ip,
-                user_id => $user_id,
-                host_id => $host_id,
-                command => $command,
-                response_code => $response_code
-            };
-        }
-        
-        $sth->finish();
-        $dbh->disconnect();
-    };
-    return \@logs;
-}
-
-sub get_system_settings {
-    my @settings = ();
-    eval {
-        my $dbh = DBI->connect("DBI:mysql:$rdn_db_schema:$rdn_db_host:$rdn_db_port", $rdn_db_user, $rdn_db_pass);
-        my $sth = $dbh->prepare("
-            SELECT config_key, config_value, config_type, description, is_sensitive
-            FROM _system_config 
-            ORDER BY config_key
-        ");
-        $sth->execute();
-        
-        while (my ($key, $value, $type, $description, $is_sensitive) = $sth->fetchrow_array()) {
-            push @settings, {
-                key => $key,
-                value => $is_sensitive ? '***' : $value,
-                type => $type,
-                description => $description,
-                is_sensitive => $is_sensitive
-            };
-        }
-        
-        $sth->finish();
-        $dbh->disconnect();
-    };
-    return \@settings;
-}
-
-sub update_system_settings {
-    my $input = shift;
-    
-    eval {
-        my $dbh = DBI->connect("DBI:mysql:$rdn_db_schema:$rdn_db_host:$rdn_db_port", $rdn_db_user, $rdn_db_pass);
-        
-        foreach my $setting (@{$input->{settings}}) {
             my $sth = $dbh->prepare("
-                UPDATE _system_config 
-                SET config_value = ?, updated_at = NOW(), updated_by = 1 
-                WHERE config_key = ?
+                INSERT INTO _commands (command_id, host_id, command, output, status, user_id, created_at)
+                VALUES (?, ?, ?, ?, 'completed', 1, NOW())
             ");
-            $sth->execute($setting->{value}, $setting->{key});
+            $sth->execute($command_id, $host_id, $command, $output);
             $sth->finish();
+            $dbh->disconnect();
         }
-        
-        $dbh->disconnect();
-        return { success => 1, message => "Settings updated successfully" };
     };
-    
-    return { success => 0, error => "Failed to update settings: $@" };
 }
 
 sub send_json {
@@ -694,7 +544,7 @@ sub send_json {
 sub send_error {
     my ($message, $code) = @_;
     $code ||= 500;
-    
+
     print "Status: $code\n\n";
     print $json->encode({ error => $message, code => $code });
 }
