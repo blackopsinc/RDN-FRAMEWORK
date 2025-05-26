@@ -273,9 +273,7 @@ INSERT INTO `_keys` (`key_type`, `key_name`, `key_value`, `algorithm`) VALUES
 
 -- Sample hosts with enhanced security
 INSERT INTO `_hosts` (`name`, `type`, `os`, `connection_string`, `fqdn`, `group_name`, `tags`, `health_check_url`) VALUES 
-('localhost', 'web', 'linux', 'http://localhost:8080/server/client?cmd=', 'localhost', 'local', '{"environment": "development", "critical": false}', 'http://localhost:8080/health'),
-('demo-server-01', 'web', 'linux', 'http://localhost:8080/server/client?cmd=', 'demo-server-01.local', 'demo', '{"environment": "demo", "critical": false}', 'http://localhost:8080/health'),
-('prod-web-01', 'web', 'linux', 'http://localhost:8080/server/client?cmd=', 'prod-web-01.example.com', 'production', '{"environment": "production", "critical": true}', 'http://localhost:8080/health');
+('localhost', 'web', 'linux', 'http://localhost:8080/server/client?cmd=', 'localhost', 'local', '{"environment": "development", "critical": false}', 'http://localhost:8080/health');
 
 -- System configuration
 INSERT INTO `_system_config` (`config_key`, `config_value`, `config_type`, `description`) VALUES 
