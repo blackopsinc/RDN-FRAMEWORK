@@ -28,6 +28,12 @@ docker-compose up -d
 docker-compose ps
 ```
 
+4. **SSL Certificate Setup (Required)**: If you encounter nginx restart issues, generate SSL certificates:
+```bash
+sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout nginx/ssl/rdn.key -out nginx/ssl/rdn.crt -subj "/C=US/ST=State/L=City/O=Organization/CN=localhost"
+docker-compose restart rdn_nginx
+```
+
 ### Access the Application
 
 #### Local Development
@@ -231,6 +237,22 @@ curl "http://localhost:8080/server/api/console/execute?host_id=1&command=pwd"
 - Verify the _login table exists in the database
 - Check that the password matches the stored value
 - Review Apache error logs: `docker exec rdn-server tail -f /var/log/apache2/error.log`
+
+#### Nginx Container Restarting
+If the nginx container keeps restarting with SSL certificate errors:
+```bash
+# Check nginx logs for SSL certificate errors
+docker-compose logs rdn_nginx
+
+# Generate self-signed SSL certificates
+sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout nginx/ssl/rdn.key -out nginx/ssl/rdn.crt -subj "/C=US/ST=State/L=City/O=Organization/CN=localhost"
+
+# Restart nginx container
+docker-compose restart rdn_nginx
+
+# Verify nginx is running
+docker-compose ps
+```
 
 #### Missing Perl Modules
 If you encounter "Can't locate [Module].pm" errors:
