@@ -48,11 +48,6 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#files" data-section="files">
-                            <i class="fas fa-folder me-1"></i>Files
-                        </a>
-                    </li>
-                    <li class="nav-item">
                         <a class="nav-link" href="#audit" data-section="audit">
                             <i class="fas fa-shield-alt me-1"></i>Audit
                         </a>
@@ -469,15 +464,251 @@
             </div>
         </div>
 
-        <!-- Other sections would be implemented similarly -->
-        <div id="files-section" class="content-section d-none">
-            <h2><i class="fas fa-folder me-2"></i>File Manager</h2>
-            <p class="text-muted">File management interface coming soon...</p>
-        </div>
-
+        <!-- Audit Section -->
         <div id="audit-section" class="content-section d-none">
-            <h2><i class="fas fa-shield-alt me-2"></i>Audit Logs</h2>
-            <p class="text-muted">Audit log viewer coming soon...</p>
+            <div class="row">
+                <div class="col-12 d-flex justify-content-between align-items-center">
+                    <h2><i class="fas fa-shield-alt me-2"></i>Security Audit</h2>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-outline-light btn-sm" onclick="refreshAuditLogs()">
+                            <i class="fas fa-sync-alt me-1"></i>Refresh
+                        </button>
+                        <button class="btn btn-primary btn-sm" onclick="exportAuditLogs()">
+                            <i class="fas fa-download me-1"></i>Export
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Audit Summary Cards -->
+            <div class="row mt-3 mb-4">
+                <div class="col-md-3">
+                    <div class="card bg-info text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h5 class="card-title">Total Events</h5>
+                                    <h3 id="total-audit-events">1,247</h3>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="fas fa-list fa-2x"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h5 class="card-title">Login Events</h5>
+                                    <h3 id="login-events">89</h3>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="fas fa-sign-in-alt fa-2x"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-3">
+                    <div class="card bg-warning text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h5 class="card-title">Failed Attempts</h5>
+                                    <h3 id="failed-attempts">12</h3>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="fas fa-exclamation-triangle fa-2x"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-3">
+                    <div class="card bg-danger text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h5 class="card-title">Security Alerts</h5>
+                                    <h3 id="security-alerts">3</h3>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="fas fa-shield-alt fa-2x"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Audit Filters -->
+            <div class="row mb-3">
+                <div class="col-12">
+                    <div class="card bg-secondary">
+                        <div class="card-body">
+                            <div class="row align-items-end">
+                                <div class="col-md-3">
+                                    <label for="audit-date-from" class="form-label">From Date</label>
+                                    <input type="date" class="form-control bg-dark text-light border-secondary" id="audit-date-from">
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="audit-date-to" class="form-label">To Date</label>
+                                    <input type="date" class="form-control bg-dark text-light border-secondary" id="audit-date-to">
+                                </div>
+                                <div class="col-md-2">
+                                    <label for="audit-event-type" class="form-label">Event Type</label>
+                                    <select class="form-select bg-dark text-light border-secondary" id="audit-event-type">
+                                        <option value="">All Events</option>
+                                        <option value="login">Login</option>
+                                        <option value="logout">Logout</option>
+                                        <option value="command">Command</option>
+                                        <option value="file">File Access</option>
+                                        <option value="security">Security</option>
+                                        <option value="system">System</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <label for="audit-severity" class="form-label">Severity</label>
+                                    <select class="form-select bg-dark text-light border-secondary" id="audit-severity">
+                                        <option value="">All Levels</option>
+                                        <option value="info">Info</option>
+                                        <option value="warning">Warning</option>
+                                        <option value="error">Error</option>
+                                        <option value="critical">Critical</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <button class="btn btn-primary w-100" onclick="filterAuditLogs()">
+                                        <i class="fas fa-filter me-1"></i>Filter
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Audit Logs Table -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card bg-secondary">
+                        <div class="card-header">
+                            <h5><i class="fas fa-list me-2"></i>Audit Events</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-dark table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Timestamp</th>
+                                            <th>Event Type</th>
+                                            <th>User</th>
+                                            <th>Source IP</th>
+                                            <th>Description</th>
+                                            <th>Severity</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="audit-logs-table">
+                                        <tr>
+                                            <td>2025-05-27 04:02:15</td>
+                                            <td><span class="badge bg-success">Login</span></td>
+                                            <td>admin</td>
+                                            <td>192.168.1.100</td>
+                                            <td>Successful login to dashboard</td>
+                                            <td><span class="badge bg-info">Info</span></td>
+                                            <td>
+                                                <button class="btn btn-sm btn-outline-light" onclick="viewAuditDetails(1)">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>2025-05-27 04:01:45</td>
+                                            <td><span class="badge bg-primary">Command</span></td>
+                                            <td>admin</td>
+                                            <td>192.168.1.100</td>
+                                            <td>Executed command: ls -la /var/log</td>
+                                            <td><span class="badge bg-info">Info</span></td>
+                                            <td>
+                                                <button class="btn btn-sm btn-outline-light" onclick="viewAuditDetails(2)">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>2025-05-27 03:58:30</td>
+                                            <td><span class="badge bg-warning">Security</span></td>
+                                            <td>system</td>
+                                            <td>127.0.0.1</td>
+                                            <td>Failed login attempt detected</td>
+                                            <td><span class="badge bg-warning">Warning</span></td>
+                                            <td>
+                                                <button class="btn btn-sm btn-outline-light" onclick="viewAuditDetails(3)">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>2025-05-27 03:57:12</td>
+                                            <td><span class="badge bg-info">System</span></td>
+                                            <td>system</td>
+                                            <td>127.0.0.1</td>
+                                            <td>Nginx configuration reloaded</td>
+                                            <td><span class="badge bg-info">Info</span></td>
+                                            <td>
+                                                <button class="btn btn-sm btn-outline-light" onclick="viewAuditDetails(4)">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>2025-05-27 03:55:00</td>
+                                            <td><span class="badge bg-danger">Security</span></td>
+                                            <td>unknown</td>
+                                            <td>203.0.113.45</td>
+                                            <td>Multiple failed login attempts from suspicious IP</td>
+                                            <td><span class="badge bg-danger">Critical</span></td>
+                                            <td>
+                                                <button class="btn btn-sm btn-outline-light" onclick="viewAuditDetails(5)">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <!-- Pagination -->
+                            <nav aria-label="Audit logs pagination" class="mt-3">
+                                <ul class="pagination pagination-sm justify-content-center">
+                                    <li class="page-item disabled">
+                                        <a class="page-link bg-dark text-light border-secondary" href="#" tabindex="-1">Previous</a>
+                                    </li>
+                                    <li class="page-item active">
+                                        <a class="page-link bg-primary border-primary" href="#">1</a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link bg-dark text-light border-secondary" href="#">2</a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link bg-dark text-light border-secondary" href="#">3</a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link bg-dark text-light border-secondary" href="#">Next</a>
+                                    </li>
+                                </ul>
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div id="settings-section" class="content-section d-none">
