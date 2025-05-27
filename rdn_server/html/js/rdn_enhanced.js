@@ -192,7 +192,7 @@ class RDNFramework {
                 <td>${this.escapeHtml(host.name)}</td>
                 <td><span class="badge bg-secondary">${host.type}</span></td>
                 <td>
-                    <i class="fas fa-${this.getOSIcon(host.os)} me-1"></i>
+                    <i class="${this.getOSIcon(host.os)} me-1"></i>
                     ${host.os}
                 </td>
                 <td>${this.escapeHtml(host.fqdn)}</td>
@@ -784,13 +784,13 @@ class RDNFramework {
 
     getOSIcon(os) {
         const icons = {
-            linux: 'linux',
-            windows: 'windows',
-            macos: 'apple',
-            freebsd: 'freebsd',
-            other: 'server'
+            linux: 'fab fa-linux',
+            windows: 'fab fa-windows',
+            macos: 'fab fa-apple',
+            freebsd: 'fab fa-freebsd',
+            other: 'fas fa-server'
         };
-        return icons[os] || 'server';
+        return icons[os] || 'fas fa-server';
     }
 
     formatFileSize(bytes) {
