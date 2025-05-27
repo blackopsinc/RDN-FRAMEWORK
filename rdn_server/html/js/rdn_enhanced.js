@@ -924,12 +924,16 @@ function deleteHost(hostId) {
     window.rdnApp.deleteHost(hostId);
 }
 
+function updateHost() {
+window.rdnApp.updateHost();
+}
+
 function logout() {
     window.rdnApp.logout();
 }
 
 function handleConsoleInput(event) {
-    if (event.key === 'Enter') {
+    if (event.key === "Enter") {
         executeCommand();
     }
 }
@@ -939,13 +943,12 @@ function refreshAuditLogs() {
 }
 
 function exportAuditLogs() {
-    // Simple export functionality
-    const table = document.getElementById('audit-logs-table');
+    const table = document.getElementById("audit-logs-table");
     if (table) {
-        let csv = 'Timestamp,Event Type,User,Source IP,Description,Severity\n';
-        const rows = table.querySelectorAll('tr');
+        let csv = "Timestamp,Event Type,User,Source IP,Description,Severity\n";
+        const rows = table.querySelectorAll("tr");
         rows.forEach(row => {
-            const cells = row.querySelectorAll('td');
+            const cells = row.querySelectorAll("td");
             if (cells.length >= 6) {
                 const rowData = [
                     cells[0].textContent,
@@ -955,36 +958,33 @@ function exportAuditLogs() {
                     cells[4].textContent,
                     cells[5].textContent.trim()
                 ];
-                csv += rowData.map(cell => `"${cell.replace(/"/g, '""')}"`).join(',') + '\n';
+                csv += rowData.map(cell => `"${cell.replace(/"/g, "\"\"")}")`).join(",") + "\n";
             }
         });
         
-        const blob = new Blob([csv], { type: 'text/csv' });
+        const blob = new Blob([csv], { type: "text/csv" });
         const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
+        const a = document.createElement("a");
         a.href = url;
-        a.download = `audit_logs_${new Date().toISOString().split('T')[0]}.csv`;
+        a.download = `audit_logs_${new Date().toISOString().split("T")[0]}.csv`;
         a.click();
         window.URL.revokeObjectURL(url);
     }
 }
 
 function filterAuditLogs() {
-    // Basic filtering functionality
-    const dateFrom = document.getElementById('audit-date-from').value;
-    const dateTo = document.getElementById('audit-date-to').value;
-    const eventType = document.getElementById('audit-event-type').value;
-    const severity = document.getElementById('audit-severity').value;
+    const dateFrom = document.getElementById("audit-date-from").value;
+    const dateTo = document.getElementById("audit-date-to").value;
+    const eventType = document.getElementById("audit-event-type").value;
+    const severity = document.getElementById("audit-severity").value;
     
-    window.rdnApp.showNotification('Audit log filtering applied', 'info');
+    window.rdnApp.showNotification("Audit log filtering applied", "info");
 }
 
 function viewAuditDetails(auditId) {
-    // Show audit details in a modal or alert for now
     alert(`Viewing details for audit event ID: ${auditId}`);
 }
 
-// Export for module systems
-if (typeof module !== 'undefined' && module.exports) {
+if (typeof module !== "undefined" && module.exports) {
     module.exports = RDNFramework;
 }

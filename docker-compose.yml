@@ -82,6 +82,7 @@ services:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf
       - ./nginx/ssl:/etc/nginx/ssl
       - ./logs/nginx:/var/log/nginx
+      - ./rdn_server:/var/www/rdn_server
     restart: unless-stopped
     depends_on:
       - rdn_server

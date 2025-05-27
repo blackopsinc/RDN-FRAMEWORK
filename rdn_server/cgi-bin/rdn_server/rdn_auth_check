@@ -20,10 +20,10 @@ if ($session_status eq "timeout" || $session_status ne "alive") {
     exit;
 } else {
     # Valid session, serve the main dashboard
-    print $rdn->header("text/html");
+    print $rdn->header(-type => "text/html", -charset => "utf-8");
     
-    # Read and serve the dashboard.html file
-    open(my $fh, '<', '/var/www/html/dashboard.html') or die "Cannot open dashboard.html: $!";
+    # Read and serve the dashboard.html file with UTF-8 encoding
+    open(my $fh, '<:encoding(UTF-8)', '/var/www/html/dashboard.html') or die "Cannot open dashboard.html: $!";
     while (my $line = <$fh>) {
         print $line;
     }
